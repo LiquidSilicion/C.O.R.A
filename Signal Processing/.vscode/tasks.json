@@ -1,0 +1,25 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Run Scilab Script",
+            "type": "shell",
+            "command": "C:/Program Files/scilab-6.1.1/bin/scilex.exe",
+            "args": [
+                "-nw",
+                "-f",
+                "${file}",
+                "-e",
+                "exit;"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always"
+            }
+        }
+    ]
+}
