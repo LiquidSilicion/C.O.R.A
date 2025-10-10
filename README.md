@@ -2,7 +2,7 @@
 
 FPGA-Accelerated Neuromorphic Keyword Spotting: Comprehensive Project Plan
 
-Project Overview
+## Project Overview
 
 This comprehensive project plan outlines a structured approach to developing an FPGA-accelerated neuromorphic keyword spotting system. By following this phased approach, the project will systematically address the challenges of bio-inspired audio processing, spiking neural networks, and efficient FPGA implementation. The resulting system promises to deliver real-time performance with the power efficiency benefits of neuromorphic computing, suitable for edge AI applications in voice interfaces and always-on devices.
 
@@ -15,7 +15,7 @@ Key innovations include:
 · End-to-end neuromorphic processing pipeline from audio to keyword recognition
 · Real-time performance with minimal power consumption
 
-Technical Architecture
+## Technical Architecture
 
 1. Cochlear Audio Frontend (Biological Signal Processing Layer)
 
@@ -177,7 +177,7 @@ Deliverables:
 · Complete project documentation
 · Final presentation
 
-Key Technical Challenges and Solutions
+## Key Technical Challenges and Solutions
 
 1. Real-time Processing Constraint:
    · Use parallel filter bank implementation 
@@ -196,7 +196,7 @@ Key Technical Challenges and Solutions
    · Careful clock domain crossing design
    · Robust synchronization mechanisms
 
-Performance Metrics and Evaluation
+## Performance Metrics and Evaluation
 
 1. Accuracy:
    · Keyword detection accuracy (>90% target) 
@@ -211,7 +211,7 @@ Performance Metrics and Evaluation
    · Power consumption per inference
    · Comparison to conventional DSP implementations
 
-Tools and Resources
+## Tools and Resources
 
 Software:
 
