@@ -25,7 +25,7 @@ module input_from_aer();
  timestamp <= in[19:0];
           spike_detected <= 1'b1;
         timestamp_valid <= 1'b1;
-          $display("AER input is %d: %d,",channel_id, timestamp);
+          $display("AER input is %d: %d,",channel_id[3:0], timestamp[19:0]);
         end
         end
   end
