@@ -1,3 +1,5 @@
+// Code your testbench here
+// or browse Examples
 module fifo(
   input clk,
   input rst,
@@ -15,8 +17,31 @@ module fifo(
   reg[6:0] wr_ptr;
   reg[6:0] rd_ptr;
   
+  //write operation
   always@(posedge clk or negedge rst)
     if(rst)
       begin
         wr_ptr <=0;
-        else if(
+        else if(wr_en && !full)begin
+          mem[wr_ptr] <= din;
+          wr_ptr <= wr_ptr+1;
+        end
+      end
+  
+  //read operation
+  always@(posedge clk or negedge rst)begin
+    if(rst)begin
+      rd_ptr <= 0;
+      dout <=0;
+    end
+    else if (rd_en && !empty)
+      begin
+        dout <= mem[rd_ptr];
+        rd_ptr <= rd_ptr+1;
+      end
+  end
+  
+  
+  assign empty = (wr_ptr == rd_ptr);
+  assign full = ((wr_ptr+1)== rd_ptr);
+endmodule
