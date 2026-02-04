@@ -20,6 +20,6 @@ module input_from_aer();
     else
     if(aer_valid)
     channel_id <= in[23:20];
- 	  timestamp <= in[19:0];
+ timestamp <= in[19:0];
 
 endmodule
