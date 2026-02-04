@@ -12,14 +12,14 @@ module input_from_aer();
   always@(posedge clk or negedge rst_n)
     if(!rst_n)
       begin
-        channel_Id;
-        timestamp 
+        channel_Id <= 4'b0;
+        timestamp <= 20'b0;
         spike_detected <= 1'b0;
         timestamp_valid <= 1'b0;
       end
     else
     if(aer_valid)
     channel_id <= in[23:20];
- 	timestamp <= in[19:0];
+ 	  timestamp <= in[19:0];
 
 endmodule
