@@ -6,7 +6,7 @@ module fifo(
   input rd_en,
   input wr_en,
   input [15:0] din,
-  output [15:0] dout,
+  output reg [15:0] dout,
   output full,
   output empty
 );
@@ -19,7 +19,7 @@ module fifo(
   
   //write operation
   always@(posedge clk or negedge rst)
-    if(rst)
+    if(~rst)
       begin
         wr_ptr <=0;
         else if(wr_en && !full)begin
@@ -30,7 +30,7 @@ module fifo(
   
   //read operation
   always@(posedge clk or negedge rst)begin
-    if(rst)begin
+    if(~rst)begin
       rd_ptr <= 0;
       dout <=0;
     end
