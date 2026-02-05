@@ -1,0 +1,62 @@
+`timescale 1ns / 1ps
+
+module I2S(
+input clk100,
+input rst,
+input sd,
+
+output reg bclk,
+output reg lrclk,
+output reg [15:0] sample,
+output reg sample_valid
+);
+
+reg [6:0] clk_div = 0;
+reg [5:0] bit_count = 0;
+reg [23:0] shift_reg = 0;
+
+
+always@(posedge clk100 or negedge rst) begin
+if (rst)begin
+clk_div <= 0;
+bclk <= 0;
+end else begin
+if(clk_div== 48) begin
+clk_div <= 0;
+bclk <= ~bclk;
+end else begin
+clk_div <= clk_div +1;
+end
+end
+end
+
+always @(posedge bclk or posedge rst )begin
+if(rst)begin
+bit_count <= 0;
+lrclk <= 0;
+shift_reg <= 0;
+sample <= 0;
+sample_valid <= 0;
+end
+else begin
+if (bit_count==63)begin
+bit_count <=0;
+lrclk <=~lrclk;
+
+end
+else begin
+bit_count <= bit_count +1;
+end
+
+shift_reg <={shift_reg[22:0],sd};
+
+if((bit_count == 23) && (lrclk == 0))begin
+sample <= shift_reg[23:8];
+sample_valid <= 1'b1;
+end
+else begin
+sample_valid <=1'b0;
+end
+end
+end
+endmodule
