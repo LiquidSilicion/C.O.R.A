@@ -1,3 +1,4 @@
+
 module fifo(
   input clk,
   input rst,
@@ -21,7 +22,7 @@ module fifo(
     end 
     else if (wr_en && !full) begin
       mem[wr_ptr] <= din;
-      wr_ptr <= wr_ptr + 1;
+      wr_ptr <= wr_ptr + 1'b1;
     end
   end
 
@@ -33,11 +34,11 @@ module fifo(
     end 
     else if (rd_en && !empty) begin
       dout   <= mem[rd_ptr];
-      rd_ptr <= rd_ptr + 1;
+      rd_ptr <= rd_ptr + 1'b1;
     end
   end
 
   assign empty = (wr_ptr == rd_ptr);
-  assign full  = ((wr_ptr + 1) == rd_ptr);
+  assign full  = ((wr_ptr + 1'b1) == rd_ptr);
 
 endmodule
