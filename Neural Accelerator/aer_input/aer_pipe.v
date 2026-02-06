@@ -12,6 +12,9 @@ module aer_pipeline(
 
   wire [23:0] fifo_dout;
   wire fifo_rd;
+  wire spike_detected;
+  
+  assign fifo_rd = fifo_full;
   
   input_from_aer dut (
     .clk(clk),
@@ -28,14 +31,11 @@ module aer_pipeline(
     .clk(clk),
     .rst(rst_n),
     .rd_en(fifo_rd),
-    .wr_en(aer_valid_in && !fifo_full),
+    .wr_en(!fifo_full),
     .din(data),
     .dout(fifo_dout),
     .full(fifo_full),
     .empty(fifo_empty)
   );
-
-  assign fifo_rd = ~fifo_empty;
-
 
 endmodule
