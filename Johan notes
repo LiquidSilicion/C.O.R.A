@@ -3,3 +3,4 @@ fuction generator to test the aer is created and saved in the common folder
 fifo created to store before being sent to decoder
 
 # pipeline needs to be created for the fifo and the decoder
+#error faced in the fifo full state and delay related
