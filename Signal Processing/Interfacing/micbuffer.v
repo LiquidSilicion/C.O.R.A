@@ -1,4 +1,3 @@
-
 module fifo(
   input clk,
   input rst,
@@ -12,33 +11,38 @@ module fifo(
 
   reg [15:0] mem [127:0];
   
-  reg [6:0] wr_ptr;
-  reg [6:0] rd_ptr;
+ 
+  reg [7:0] wr_ptr;
+  reg [7:0] rd_ptr;
 
-  // Write
+ 
   always @(posedge clk or negedge rst) begin
     if (~rst) begin
-      wr_ptr <= 0;
+      wr_ptr <= 8'd0;
     end 
     else if (wr_en && !full) begin
-      mem[wr_ptr] <= din;
+      mem[wr_ptr[6:0]] <= din;  
       wr_ptr <= wr_ptr + 1'b1;
     end
   end
 
-  // Read
+
   always @(posedge clk or negedge rst) begin
     if (~rst) begin
-      rd_ptr <= 0;
-      dout   <= 0;
+      rd_ptr <= 8'd0;
+      dout   <= 16'd0;
     end 
     else if (rd_en && !empty) begin
-      dout   <= mem[rd_ptr];
+      dout   <= mem[rd_ptr[6:0]]; 
       rd_ptr <= rd_ptr + 1'b1;
     end
   end
 
-  assign empty = (wr_ptr == rd_ptr);
-  assign full  = ((wr_ptr + 1'b1) == rd_ptr);
 
-endmodule
+  assign empty = (wr_ptr == rd_ptr);
+
+  
+  assign full  = (wr_ptr[6:0] == rd_ptr[6:0]) &&
+                 (wr_ptr[7]   != rd_ptr[7]);
+
+endmodule 
