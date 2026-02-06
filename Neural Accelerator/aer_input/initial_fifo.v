@@ -11,8 +11,8 @@ module fifo(
 
   reg [23:0] mem [63:0];
   
-  reg [6:0] wr_ptr;
-  reg [6:0] rd_ptr;
+  reg [7:0] wr_ptr;
+  reg [7:0] rd_ptr;
 
   // Write
   always @(posedge clk or negedge rst) begin
@@ -38,6 +38,6 @@ module fifo(
   end
 
   assign empty = (wr_ptr == rd_ptr);
-  assign full  = ((wr_ptr + 1'b1) == rd_ptr);
+  assign full  = ((wr_ptr + 1'b1) == rd_ptr) && (wr_ptr != rd_ptr);
 
 endmodule
