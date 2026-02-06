@@ -1,7 +1,7 @@
 module aer_pipeline(
   input clk,
   input rst_n,
-  input [23:0]in,
+  input [23:0]data,
   input aer_valid,
 
   output [3:0]channel_Id,
@@ -16,8 +16,8 @@ module aer_pipeline(
   input_from_aer dut (
     .clk(clk),
     .rst_n(rst_n),
-    .in(in),
-    .aer_valid(aer_valid),
+    .in(fifo_dout),
+    .aer_valid(fifo_rd),
     .spike_detected(spike_detected),
     .channel_Id(channel_Id),
     .timestamp(timestamp),
@@ -27,9 +27,9 @@ module aer_pipeline(
   fifo dut_fifo (
     .clk(clk),
     .rst(rst_n),
-    .rd_en(fifo_rd_en),
+    .rd_en(fifo_rd),
     .wr_en(aer_valid_in && !fifo_full),
-    .din(aer_data_in),
+    .din(data),
     .dout(fifo_dout),
     .full(fifo_full),
     .empty(fifo_empty)
