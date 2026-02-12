@@ -18,4 +18,14 @@ internal state machine:
  RECORD
  PROCESS
 
-#added led reaction
+#add led reaction
+LED Patterns for User Guidance:
+IDLE: LED off
+RECORDING: Slow blink (once per button press)
+COLLECTED_EXAMPLE: Quick blink (acknowledge)
+PROGRESS: 
+After 5 examples: counter blink
+After 10 examples: counter blink
+All 15 collected: Fast blinking (processing)
+TRAINING_COMPLETE: Solid on
+READY: Solid on
