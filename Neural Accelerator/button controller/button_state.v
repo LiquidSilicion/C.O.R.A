@@ -21,8 +21,8 @@ module button_state(
     localparam SYS_COMMAND_ACTIVE = 3'd4;
     
     reg [2:0] sys_state;
-    reg [3:0] examples_collected;
-   
+    reg [3:0] words_collected;
+
     localparam INT_WAIT    = 2'd0;
     localparam INT_RECORD  = 2'd1;
     localparam INT_PROCESS = 2'd2;
@@ -31,20 +31,18 @@ module button_state(
     
     reg [15:0] utterance_bins [0:299];
     reg [8:0] utterance_length;
-    
+
     reg [799:0] training_examples [0:14];
-    
-    reg example_ready;
-    reg [799:0] example_window;
-    
+    reg word_ready;
+    reg [799:0] word_window;
     reg bin_timer_tick;
     reg wake_word_detected;
     reg command_complete;
-
     integer i;
     integer src_index;
 
     reg [7:0] bin_counter;
+    
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             bin_counter <= 8'd0;
@@ -66,7 +64,7 @@ module button_state(
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             sys_state <= SYS_IDLE;
-            examples_collected <= 4'b0;
+            words_collected <= 4'b0;
             system_ready <= 1'b0;
         end
         else begin
@@ -74,16 +72,16 @@ module button_state(
                 SYS_IDLE: begin
                     if (button_pressed) begin
                         sys_state <= SYS_TRAINING;
-                        examples_collected <= 4'b0;
+                        words_collected <= 4'b0;
                     end
                 end
                 
                 SYS_TRAINING: begin
-                    if (example_ready) begin
-                        training_examples[examples_collected] <= example_window;
-                        examples_collected <= examples_collected + 1'b1;
+                    if (word_ready) begin
+                        training_examples[words_collected] <= word_window;
+                        words_collected <= words_collected + 1'b1;
 
-                        if (examples_collected == 4'd14) 
+                        if (words_collected == 4'd14) 
                         begin
                             sys_state <= SYS_TRAIN_PROCESS;
                         end
@@ -118,15 +116,15 @@ module button_state(
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             int_state <= INT_WAIT;
-            example_ready <= 1'b0;
+            word_ready <= 1'b0;
             utterance_length <= 9'b0;
-            example_window <= 800'b0;
+            word_window <= 800'b0;
         end
         else begin
             if (sys_state == SYS_TRAINING) begin
                 case (int_state)
                     INT_WAIT: begin
-                        example_ready <= 1'b0;
+                        word_ready <= 1'b0;
                         if (button_pressed) begin
                             int_state <= INT_RECORD;
                             utterance_length <= 9'b0;
@@ -155,13 +153,13 @@ module button_state(
                         for (i = 0; i < 50; i = i + 1) begin
                             src_index = (i * utterance_length) / 50;
                             if (src_index < 300) begin
-                                example_window[i*16 +: 16] <= utterance_bins[src_index];
+                                word_window[i*16 +: 16] <= utterance_bins[src_index];
                             end
                             else begin
-                                example_window[i*16 +: 16] <= 16'b0;
+                                word_window[i*16 +: 16] <= 16'b0;
                             end
                         end
-                        example_ready <= 1'b1;
+                        word_ready <= 1'b1;
                         int_state <= INT_WAIT;
                     end
                     
@@ -172,14 +170,14 @@ module button_state(
             end
             else begin
                 int_state <= INT_WAIT;
-                example_ready <= 1'b0;
+                word_ready <= 1'b0;
             end
         end
     end
     
    
     always @(*) begin
-        training_progress = examples_collected;
+        training_progress = words_collected;
     end
 
     always @(posedge clk or negedge rst_n) begin
