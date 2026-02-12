@@ -4,3 +4,18 @@ fifo created to store before being sent to decoder
 
 # pipeline needs to be created for the fifo and the decoder
 #error faced in the fifo full state and delay related
+
+#button interface progress:
+system state machine:
+ SYS_IDLE
+ SYS_TRAINING
+ SYS_TRAIN_PROCESS
+ SYS_READY
+ SYS_COMMAND_ACTIVE
+
+internal state machine:
+ WAIT
+ RECORD
+ PROCESS
+
+#added led reaction
