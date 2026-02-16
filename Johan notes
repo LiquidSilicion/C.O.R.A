@@ -68,3 +68,24 @@ Memory Address: [0][1][2][3][4][5][6][7]...[N-1]
                     [IDLE]
 
 
+
+                    ┌─────────────────┐
+Audio In ─────┬────>│ Circular Buffer │<──── Always Writing
+              │     │    (500ms)       │
+              │     └────────┬────────┘
+              │              │
+              │     ┌────────▼────────┐
+              └────>│      VAD         │
+                    │ (Energy + ZCR)   │
+                    └────────┬────────┘
+                             │ VAD Flag
+                    ┌────────▼────────┐
+                    │  State Machine  │
+                    │ (IDLE/TRIG/REC/ │
+                    │  HANG/DONE)     │
+                    └────────┬────────┘
+                             │ Control
+                    ┌────────▼────────┐
+                    │ Output FIFO     │────> To Processing
+                    │ (Full Utterance)│
+                    └─────────────────┘
