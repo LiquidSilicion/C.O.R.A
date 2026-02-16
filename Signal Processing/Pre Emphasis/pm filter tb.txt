@@ -1,0 +1,88 @@
+`timescale 1ns / 1ps
+
+module tb_pm_filter;
+
+    reg clk;
+    reg rst;
+    reg signed [15:0] x_n;
+    wire signed [15:0] y_n;
+    
+    reg [15:0] audio_mem [0:65535];
+    integer num_samples;
+    integer i;
+    integer output_file;
+    
+    pm_filter dut (
+        .clk(clk),
+        .rst(rst),
+        .x_n(x_n),
+        .y_n(y_n)
+    );
+    
+    initial begin
+        clk = 0;
+        forever #10 clk = ~clk;
+    end
+    
+    initial begin
+        rst = 1;
+        x_n = 16'sd0;
+        num_samples = 0;
+        
+        $display("========================================");
+        $display("Pre-Emphasis Filter Testbench");
+        $display("========================================");
+        $display("Loading audio samples from file...");
+        
+        $readmemh("audio_samples.hex", audio_mem);
+        
+        for (i = 0; i < 65536; i = i + 1) begin
+            if (audio_mem[i] !== 16'hxxxx) begin
+                num_samples = i + 1;
+            end else begin
+                i = 65536;
+            end
+        end
+        
+        $display("Loaded %0d samples", num_samples);
+        
+        output_file = $fopen("filtered_output.hex", "w");
+        if (output_file == 0) begin
+            $display("ERROR: Could not open output file!");
+            $finish;
+        end
+        
+        #100;
+        rst = 0;
+        #40;
+        
+        $display("Starting pre-emphasis filtering...");
+        $display("========================================");
+        
+        for (i = 0; i < num_samples; i = i + 1) begin
+            @(posedge clk);
+            x_n = $signed(audio_mem[i]);
+            
+            @(posedge clk);
+            
+            $fwrite(output_file, "%04X\n", y_n);
+            
+            if (i % 1000 == 0) begin
+                $display("Processed %0d / %0d samples (%.1f%%)", 
+                         i, num_samples, (i*100.0)/num_samples);
+            end
+        end
+        
+        $display("========================================");
+        $display("Filtering complete!");
+        $display("Total samples processed: %0d", num_samples);
+        $display("Output saved to: filtered_output.hex");
+        $display("========================================");
+        
+        $fclose(output_file);
+        
+        #100;
+        $finish;
+    end
+
+endmodule
