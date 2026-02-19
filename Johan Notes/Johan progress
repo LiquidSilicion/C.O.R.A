@@ -89,3 +89,19 @@ Audio In ─────┬────>│ Circular Buffer │<──── Alw
                     │ Output FIFO     │────> To Processing
                     │ (Full Utterance)│
                     └─────────────────┘
+
+
+audio_in → [Square] → [Accumulate 10ms] → short_term_energy
+                                              |
+                                              ↓
+                                    [Low-pass Filter] 
+                                              | α=0.95
+                                              ↓
+                                    smoothed_energy
+                                              |
+                    ┌─────────────────────────┴─────────────────────────┐
+                    ↓                         ↓                          ↓
+            [Compare to               [Hysteresis                 [Hangover
+             Threshold]                 Logic]                      Timer]
+                    ↓                         ↓                          ↓
+              vad_raw ───────────→ speech_detected ───────────→ recording_active
