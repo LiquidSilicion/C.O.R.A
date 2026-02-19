@@ -33,7 +33,7 @@ always @(posedge clk or negedge rst) begin
     end
 end
 
-// Generate LRCLK (divide BCLK by 32 for 16-bit stereo)
+// Generate LRCLK (divide BCLK by 32 for 16-bit)
 // 512kHz / 32 = 16kHz
 reg [4:0] lrclk_div;
 always @(posedge bclk_reg or negedge rst) begin
