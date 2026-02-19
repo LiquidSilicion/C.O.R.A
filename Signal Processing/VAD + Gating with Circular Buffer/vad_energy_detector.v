@@ -1,8 +1,8 @@
 module vad_energy_detector #(
     parameter SAMPLE_RATE = 16000,
     parameter THRESHOLD = 32'd1000000,
-    parameter HANGOVER_MS = 300,
-    parameter BUFFER_SIZE_MS = 1500
+    parameter HANGOVER_MS = 300,  // How long to keep speech detected after it ends
+    parameter BUFFER_SIZE_MS = 1500  
 )(
     input wire clk,
     input wire rst_n,
@@ -19,17 +19,17 @@ module vad_energy_detector #(
     localparam HANGOVER_MAX = (SAMPLE_RATE * HANGOVER_MS / 1000) - 1;
     localparam ALPHA = 16'd62259;
 
-    reg [31:0] energy_accum;
-    reg [15:0] sample_count;
-    reg [31:0] short_term_energy;
-    reg [31:0] energy_history [0:9];
+    reg [31:0] energy_accum; // Accumulates squared samples over 10ms
+    reg [15:0] sample_count; // Counts samples in current 10ms window
+    reg [31:0] short_term_energy; // Energy for just-completed 10ms window
+    reg [31:0] energy_history [0:9];  // Last 10 energy values (100ms history)
     reg [3:0] history_ptr;
     
     reg [31:0] alpha_fixed;
-    reg [31:0] one_minus_alpha;
+    reg [31:0] one_minus_alpha; // 1-alpha in Q16 (0.05 = 3277)
     
     reg [15:0] hangover_counter;
-    reg vad_raw;
+    reg vad_raw; // Raw VAD decision before hangover
 
     integer i;
     always @(posedge clk or negedge rst_n) begin
