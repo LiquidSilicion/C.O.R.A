@@ -1,56 +1,74 @@
-module i2s(
-    input wire mclk,
-    input wire rst_n,
-    input wire bclk,
-    input wire lrclk,
-    input wire sd,
-    
-    output reg [15:0] audio_sample,
+module interface(
+    input clk,
+    input rst_n,        
+    input sd,
+    output reg bclk,
+    output reg lrclk,
+    output reg [15:0] sample,
     output reg sample_valid
 );
 
-    reg bclk_sync, bclk_prev;
-    reg lrclk_sync, lrclk_prev;
-    reg sd_sync;
-    reg [15:0] shift_reg;
-    reg [4:0] bit_count;
-    reg [15:0] left_chan, right_chan;
-    
-    always @(posedge mclk or negedge rst_n) begin
-        if (!rst_n) begin
-            bclk_sync <= 0;
-            bclk_prev <= 0;
-            lrclk_sync <= 0;
-            lrclk_prev <= 0;
-            sd_sync <= 0;
-            shift_reg <= 0;
-            bit_count <= 0;
-            audio_sample <= 0;
-            sample_valid <= 0;
+reg [6:0] clk_div = 0;
+reg [5:0] bit_count = 0;
+reg [23:0] shift_reg = 0;
+
+ila_0 your_instance_name (
+	.clk(clk), // input wire clk
+
+
+	.probe0(rst_n), // input wire [0:0]  probe0  
+	.probe1(sd), // input wire [0:0]  probe1 
+	.probe2(bclk), // input wire [0:0]  probe2 
+	.probe3(lrclk), // input wire [0:0]  probe3 
+	.probe4(shift_reg), // input wire [23:0]  probe4 
+	.probe5(sample), // input wire [15:0]  probe5 
+	.probe6(bit_count), // input wire [5:0]  probe6 
+	.probe7(sample_valid) // input wire [0:0]  probe7
+);
+
+always @(posedge clk or negedge rst_n) begin
+    if (!rst_n) begin
+        clk_div <= 0;
+        bclk <= 0;
+        lrclk <= 0;
+    end 
+    else begin
+        if (clk_div == 49) begin 
+            clk_div <= 0;
+            bclk <= ~bclk;
+            lrclk <= 0;
         end else begin
-            bclk_sync <= bclk;
-            bclk_prev <= bclk_sync;
-            lrclk_sync <= lrclk;
-            lrclk_prev <= lrclk_sync;
-            sd_sync <= sd;
-            
-            sample_valid <= 0;
-            
-            if (lrclk_sync != lrclk_prev) begin
-                bit_count <= 0;
-            end
-            
-            if (bclk_sync && !bclk_prev) begin
-                shift_reg <= {shift_reg[14:0], sd_sync};
-                bit_count <= bit_count + 1;
-                
-                if (bit_count == 15) begin
-                    audio_sample <= {shift_reg[14:0], sd_sync};
-                    sample_valid <= 1'b1;
-                    bit_count <= 0;
-                end
-            end
+            clk_div <= clk_div + 1;
         end
     end
+end
+
+always @(posedge bclk or negedge rst_n) begin
+    if (!rst_n) 
+      begin
+        bit_count <= 0;
+        shift_reg <= 0;
+        sample <= 0;
+        sample_valid <= 0;
+    end else begin
+        sample_valid <= 0;
+        
+
+            shift_reg <= {shift_reg[22:0], sd};
+            bit_count <= bit_count + 1;
+            
+            if (bit_count == 17 && lrclk == 0)
+              begin
+                sample <= shift_reg[23:8];
+                sample_valid <= 1'b1;
+              end
+            
+            if (bit_count == 63) begin
+                bit_count <= 0;
+                lrclk <= ~lrclk;
+            end
+        end
+ end
+
 
 endmodule
