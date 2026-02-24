@@ -9,11 +9,11 @@ module vad #(
     parameter HANGOVER_MS = 300,
     parameter PRE_TRIGGER_MS = 200,
     parameter WINDOW_MS = 10,
-    localparam SAMPLES_PER_WINDOW = SAMPLE_RATE * WINDOW_MS / 1000,
-    localparam HANGOVER_SAMPLES = SAMPLE_RATE * HANGOVER_MS / 1000,
-    localparam PRE_TRIGGER_SAMPLES = SAMPLE_RATE * PRE_TRIGGER_MS / 1000,
-    localparam ALPHA_NOISE = 16'd63550,
-    localparam ALPHA_ENERGY = 16'd58054
+    parameter SAMPLES_PER_WINDOW = SAMPLE_RATE * WINDOW_MS / 1000,
+    parameter HANGOVER_SAMPLES = SAMPLE_RATE * HANGOVER_MS / 1000,
+    parameter PRE_TRIGGER_SAMPLES = SAMPLE_RATE * PRE_TRIGGER_MS / 1000,
+    parameter ALPHA_NOISE = 16'd63550,
+    parameter ALPHA_ENERGY = 16'd58054
 )(
     input wire clk,
     input wire rst_n,
