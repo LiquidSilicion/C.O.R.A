@@ -43,7 +43,8 @@ module vad #(
     reg zcr_vad;
     reg [15:0] hangover_counter;
     reg [15:0] pre_trigger_counter;
-
+    
+    integer i;
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             energy_accum <= 32'd0;
@@ -51,7 +52,7 @@ module vad #(
             window_energy <= 32'd0;
             smoothed_energy <= 32'd0;
             history_ptr <= 2'd0;
-            for (int i = 0; i < 4; i++) begin
+            for (i = 0; i < 4; i=i+1) begin
                 energy_history[i] <= 32'd0;
             end
         end else if (sample_valid) begin
