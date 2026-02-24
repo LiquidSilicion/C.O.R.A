@@ -6,7 +6,7 @@ input rst,
 input sd,
 output reg bclk = 0,
 output reg lrclk = 1,
-outpututput reg [15:0] sample = 0,
+output reg [15:0] sample = 0,
 output reg sample_valid = 0
 );
 
