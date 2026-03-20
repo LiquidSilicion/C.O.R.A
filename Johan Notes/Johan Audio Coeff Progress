@@ -1,0 +1,78 @@
+Ah, now I understand! You're seeing **"BRAM Controller"** and **"Standalone"** as the only options. This is correct! Here's what's happening:
+
+## The Terminology Clarification
+
+In the Block Memory Generator GUI, the option you're looking for (what we've been calling "Native") is actually called **"Standalone"** .
+
+| Your GUI Option | What It Means |
+|-----------------|---------------|
+| **BRAM Controller** | Creates memory that connects to an AXI BRAM Controller IP (for processor systems)  |
+| **Standalone** | Creates memory with simple Native interface (what you want!)  |
+
+## Your Solution: Select "Standalone"
+
+**Choose "Standalone"** - that's the correct option for your simple coefficient ROM!
+
+### Complete Configuration for Your 16-bit Coefficient ROM
+
+**Basic Tab**:
+```
+┌─────────────────────────────────────┐
+│ BASIC TAB                           │
+├─────────────────────────────────────┤
+│ Mode: [Standalone              ▼]   │ ← Choose this!
+│                                     │
+│ Memory Type: [Single Port ROM  ▼]   │
+└─────────────────────────────────────┘
+```
+
+**Port A Options Tab**:
+```
+┌─────────────────────────────────────┐
+│ Port A Options                       │
+├─────────────────────────────────────┤
+│ Read Width:  [16       ]            │ ← Your 16-bit output
+│ Read Depth:  [1024     ]            │ ← Your number of coefficients
+│                                     │
+│ Operating Mode: [Read First   ▼]    │
+│                                     │
+│ Enable Port Type: [Always Enabled ▼]│ ← Simplifies interface
+│                                     │
+│ Primitives Output Register: UNCHECKED│ ← 1-cycle latency
+│ Use RSTA Pin: UNCHECKED              │ ← No reset needed
+└─────────────────────────────────────┘
+```
+
+**Other Options Tab**:
+```
+┌─────────────────────────────────────┐
+│ Other Options                        │
+├─────────────────────────────────────┤
+│ Memory Initialization                │
+│   ☑ Load Init File                   │ ← CHECK this!
+│   COE file: [your_file.coe     ]    │ ← Browse to your .coe
+│                                      │
+│ Enable Safety Circuit: UNCHECKED     │ ← No rsta_busy signal!
+└─────────────────────────────────────┘
+```
+
+## The Resulting Simple Interface
+
+After configuring as **Standalone** with these settings, your BRAM will have exactly what you need:
+
+```verilog
+your_coeff_rom your_bram_inst (
+    .clka(clk),        // Clock input
+    .addra(addr),      // Address input (selects which coefficient)
+    .douta(coeff)      // ⭐ 16-bit coefficient output!
+    // No ena, no wea, no rsta, no rsta_busy - clean and simple!
+);
+```
+
+## Why "Standalone" = "Native"
+
+The search results confirm this :
+- **Standalone mode** = Native interface = Direct control from your logic
+- **BRAM Controller mode** = AXI interface = Needs an external controller
+
+So you're all set! **Select "Standalone"** and you'll get the simple interface with `clka`, `addra`, and `douta` signals that you need for your coefficient ROM.
