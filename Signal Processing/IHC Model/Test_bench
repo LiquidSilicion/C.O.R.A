@@ -1,0 +1,164 @@
+`timescale 1ns / 1ps
+//////////////////////////////////////////////////////////////////////////////////
+// Company: 
+// Engineer: 
+// 
+// Create Date: 03/27/2026 01:27:16 AM
+// Design Name: 
+// Module Name: tb_ihc16
+// Project Name: 
+// Target Devices: 
+// Tool Versions: 
+// Description: 
+// 
+// Dependencies: 
+// 
+// Revision:
+// Revision 0.01 - File Created
+// Additional Comments:
+// 
+//////////////////////////////////////////////////////////////////////////////////
+
+
+module tb_ihc_16ch;
+ 
+    reg clk;
+    reg rst;
+ 
+    initial clk = 0;
+    always #5 clk = ~clk;
+ 
+    // Valid: 1 pulse every 6250 cycles = 16kHz at 100MHz
+    reg valid;
+    integer clk_count;
+ 
+    always @(posedge clk) begin
+        if (rst) begin
+            clk_count <= 0;
+            valid     <= 0;
+        end
+        else begin
+            if (clk_count == 6249) begin
+                clk_count <= 0;
+                valid     <= 1;
+            end
+            else begin
+                clk_count <= clk_count + 1;
+                valid     <= 0;
+            end
+        end
+    end
+ 
+    // 16 fixed test inputs
+    wire signed [15:0] x_in [0:15];
+    assign x_in[0]  =  16'sd32767;
+    assign x_in[1]  =  16'sd16000;
+    assign x_in[2]  =  16'sd8000;
+    assign x_in[3]  =  16'sd4000;
+    assign x_in[4]  =  16'sd2000;
+    assign x_in[5]  =  16'sd1000;
+    assign x_in[6]  =  16'sd500;
+    assign x_in[7]  =  16'sd250;
+    assign x_in[8]  =  16'sd100;
+    assign x_in[9]  =  16'sd50;
+    assign x_in[10] =  16'sd10;
+    assign x_in[11] =  16'sd1;
+    assign x_in[12] =  16'sd0;
+    assign x_in[13] = -16'sd100;
+    assign x_in[14] = -16'sd1000;
+    assign x_in[15] = -16'sd32768;
+ 
+    // Intermediate stage wires
+    wire [15:0]        nl_out  [0:15];
+    wire               nl_valid[0:15];
+    wire signed [15:0] af_out  [0:15];
+    wire               af_valid[0:15];
+    wire [15:0]        hwr_out [0:15];
+    wire               hwr_valid[0:15];
+    wire [15:0]        lp_out  [0:15];
+    wire               lp_valid[0:15];
+ 
+    // Generate 16 channels - all 4 stages instantiated individually
+    genvar i;
+    generate
+        for (i = 0; i < 16; i = i + 1) begin : ihc_ch
+ 
+            nonlinear_compression u_nl (
+                .clk(clk), .rst(rst), .valid_in(valid),
+                .x_in(x_in[i]), .y_out(nl_out[i]), .valid_out(nl_valid[i])
+            );
+ 
+            adaptation_filter u_af (
+                .clk(clk), .rst(rst), .valid_in(nl_valid[i]),
+                .x_in(nl_out[i]), .y_out(af_out[i]), .valid_out(af_valid[i])
+            );
+ 
+            half_wave_rectifier u_hwr (
+                .clk(clk), .rst(rst), .valid_in(af_valid[i]),
+                .x_in(af_out[i]), .y_out(hwr_out[i]), .valid_out(hwr_valid[i])
+            );
+ 
+            lowpass_filter u_lp (
+                .clk(clk), .rst(rst), .valid_in(hwr_valid[i]),
+                .x_in(hwr_out[i]), .y_out(lp_out[i]), .valid_out(lp_valid[i])
+            );
+ 
+        end
+    endgenerate
+ 
+    // Pulse counter
+    integer pulse_count;
+    always @(posedge clk) begin
+        if (rst)           pulse_count <= 0;
+        else if (lp_valid[0]) pulse_count <= pulse_count + 1;
+    end
+ 
+    // Print all stages every final valid pulse
+    always @(posedge clk) begin
+        if (lp_valid[0]) begin
+            $display("============================================================");
+            $display("Pulse %0d", pulse_count);
+            $display("============================================================");
+            $display("%-4s %-8s %-8s %-10s %-8s %-8s",
+                     "Ch","x_in","NL_out","AF_out","HWR_out","LP_out");
+            $display("------------------------------------------------------------");
+            $display("%-4d %-8d %-8d %-10d %-8d %-8d", 1,  $signed(x_in[0]),  nl_out[0],  $signed(af_out[0]),  hwr_out[0],  lp_out[0]);
+            $display("%-4d %-8d %-8d %-10d %-8d %-8d", 2,  $signed(x_in[1]),  nl_out[1],  $signed(af_out[1]),  hwr_out[1],  lp_out[1]);
+            $display("%-4d %-8d %-8d %-10d %-8d %-8d", 3,  $signed(x_in[2]),  nl_out[2],  $signed(af_out[2]),  hwr_out[2],  lp_out[2]);
+            $display("%-4d %-8d %-8d %-10d %-8d %-8d", 4,  $signed(x_in[3]),  nl_out[3],  $signed(af_out[3]),  hwr_out[3],  lp_out[3]);
+            $display("%-4d %-8d %-8d %-10d %-8d %-8d", 5,  $signed(x_in[4]),  nl_out[4],  $signed(af_out[4]),  hwr_out[4],  lp_out[4]);
+            $display("%-4d %-8d %-8d %-10d %-8d %-8d", 6,  $signed(x_in[5]),  nl_out[5],  $signed(af_out[5]),  hwr_out[5],  lp_out[5]);
+            $display("%-4d %-8d %-8d %-10d %-8d %-8d", 7,  $signed(x_in[6]),  nl_out[6],  $signed(af_out[6]),  hwr_out[6],  lp_out[6]);
+            $display("%-4d %-8d %-8d %-10d %-8d %-8d", 8,  $signed(x_in[7]),  nl_out[7],  $signed(af_out[7]),  hwr_out[7],  lp_out[7]);
+            $display("%-4d %-8d %-8d %-10d %-8d %-8d", 9,  $signed(x_in[8]),  nl_out[8],  $signed(af_out[8]),  hwr_out[8],  lp_out[8]);
+            $display("%-4d %-8d %-8d %-10d %-8d %-8d", 10, $signed(x_in[9]),  nl_out[9],  $signed(af_out[9]),  hwr_out[9],  lp_out[9]);
+            $display("%-4d %-8d %-8d %-10d %-8d %-8d", 11, $signed(x_in[10]), nl_out[10], $signed(af_out[10]), hwr_out[10], lp_out[10]);
+            $display("%-4d %-8d %-8d %-10d %-8d %-8d", 12, $signed(x_in[11]), nl_out[11], $signed(af_out[11]), hwr_out[11], lp_out[11]);
+            $display("%-4d %-8d %-8d %-10d %-8d %-8d", 13, $signed(x_in[12]), nl_out[12], $signed(af_out[12]), hwr_out[12], lp_out[12]);
+            $display("%-4d %-8d %-8d %-10d %-8d %-8d", 14, $signed(x_in[13]), nl_out[13], $signed(af_out[13]), hwr_out[13], lp_out[13]);
+            $display("%-4d %-8d %-8d %-10d %-8d %-8d", 15, $signed(x_in[14]), nl_out[14], $signed(af_out[14]), hwr_out[14], lp_out[14]);
+            $display("%-4d %-8d %-8d %-10d %-8d %-8d", 16, $signed(x_in[15]), nl_out[15], $signed(af_out[15]), hwr_out[15], lp_out[15]);
+            $display(" ");
+        end
+    end
+ 
+    // Run for 30 valid pulses then stop
+    initial begin
+        rst = 1;
+        repeat(20) @(posedge clk);
+        rst = 0;
+        #1875000;
+        $display("=== Simulation Complete ===");
+        $display("Verify NL_out pulse 1: ch1=32767 ch6=14699 ch13=0 ch16=32767");
+        $display("Verify AF_out: drops over pulses as adaptation kicks in");
+        $display("Verify HWR_out: ch14 ch15 ch16 show 0 when AF_out negative");
+        $display("Verify LP_out: slowly rises first 5 pulses then stabilizes");
+        $finish;
+    end
+    always @(posedge clk) begin
+    if (valid)
+        $display("valid fired at time %0t", $time);
+end
+ 
+endmodule
+ 
