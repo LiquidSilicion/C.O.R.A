@@ -1,0 +1,64 @@
+`timescale 1ns / 1ps
+//////////////////////////////////////////////////////////////////////////////////
+// Company: 
+// Engineer: 
+// 
+// Create Date: 03/27/2026 01:23:04 AM
+// Design Name: 
+// Module Name: hr
+// Project Name: 
+// Target Devices: 
+// Tool Versions: 
+// Description: 
+// 
+// Dependencies: 
+// 
+// Revision:
+// Revision 0.01 - File Created
+// Additional Comments:
+// 
+//////////////////////////////////////////////////////////////////////////////////
+
+
+module half_wave_rectifier(    
+    input  wire               clk,
+    input  wire               rst,
+    input  wire               valid_in,
+    input  wire signed [15:0] x_in,       // signed input from adaptation filter
+    output reg         [15:0] y_out,       // unsigned output - negatives zeroed
+    output reg                valid_out
+
+    );
+        // =============================================
+    // Half Wave Rectification
+    //
+    // Biological basis:
+    // Auditory nerve fibers only fire on positive
+    // receptor potential (Kiang 1965).
+    // Negative values = zero neural firing.
+    //
+    // Operation:
+    // Check MSB (sign bit) of x_in
+    // MSB = 1 → negative number → output 0
+    // MSB = 0 → positive number → pass through
+    //
+    // Why after adaptation filter:
+    // Adaptation needs bipolar signal - negative phase
+    // drives vesicle pool recovery (Sumner et al. 2002)
+    // Only after adaptation is complete do we zero negatives
+    // =============================================
+ 
+    always @(posedge clk) begin
+        if (rst) begin
+            y_out     <= 16'd0;
+            valid_out <= 1'b0;
+        end
+        else if (valid_in) begin
+            y_out     <= x_in[15] ? 16'd0 : x_in;
+            valid_out <= 1'b1;
+        end
+        else begin
+            valid_out <= 1'b0;
+        end
+    end
+endmodule
