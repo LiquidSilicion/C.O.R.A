@@ -41,10 +41,7 @@ W_out_q8_8 = float_to_q8_8(W_out)
 
 # ── Generate .coe File (Xilinx Vivado Format) ─────────────────
 def generate_coe_file(weights_dict, filename):
-    """
-    Generate Xilinx .coe file for BRAM initialization
-    Format: Hexadecimal, one value per line
-    """
+    """Generate Xilinx .coe file for BRAM initialization"""
     with open(filename, 'w') as f:
         f.write("memory_initialization_radix=16;\n")
         f.write("memory_initialization_vector=\n")
@@ -52,41 +49,27 @@ def generate_coe_file(weights_dict, filename):
         all_weights = []
         for name, weights in weights_dict.items():
             print(f"  📦 {name}: {weights.shape} → {weights.size} words")
-            all_weights.extend(weights.flatten())
+            # Reinterpret signed int16 as unsigned uint16 for correct hex output
+            all_weights.extend(weights.astype(np.uint16).flatten())
         
         total_words = len(all_weights)
         for i, val in enumerate(all_weights):
-            # Convert to unsigned 16-bit hex
-            hex_val = val & 0xFFFF
-            f.write(f"{hex_val:04X}")
-            
-            # Add comma or semicolon
-            if i < total_words - 1:
-                f.write(",")
-            else:
-                f.write(";")
-            
-            # Newline every 16 values for readability
+            f.write(f"{val:04X}")
+            f.write("," if i < total_words - 1 else ";")
             if (i + 1) % 16 == 0:
                 f.write("\n")
-    
     print(f"✅ Generated {filename} ({total_words} words)")
 
 # ── Generate .mem File (Icarus Verilog $readmemh Format) ──────
 def generate_mem_file(weights_dict, filename):
-    """
-    Generate flat .mem file for Icarus Verilog simulation
-    Format: One hex value per line, no headers
-    """
+    """Generate flat .mem file for Icarus Verilog simulation"""
     with open(filename, 'w') as f:
         for name, weights in weights_dict.items():
-            for val in weights.flatten():
-                hex_val = val & 0xFFFF
-                f.write(f"{hex_val:04X}\n")
-    
+            # Reinterpret as uint16 to get correct two's complement hex
+            for val in weights.astype(np.uint16).flatten():
+                f.write(f"{val:04X}\n")
     total_lines = sum(w.size for w in weights_dict.values())
     print(f"✅ Generated {filename} ({total_lines} lines)")
-
 # ── Create Weight Dictionary in Correct Memory Layout ─────────
 print("\n📋 Organizing weights in BRAM memory layout:")
 print("   Address 0x0000-0x07FF: W_in  (16×128 = 2,048 words)")
@@ -115,12 +98,14 @@ with open('weights.mem', 'r') as f:
     mem_lines = f.readlines()
     print(f"   weights.mem: {len(mem_lines)} lines")
 
-# ── Show Sample Values ────────────────────────────────────────
+## ── Show Sample Values ────────────────────────────────────────
 print("\n📝 Sample weight values (first 8 of W_in):")
+# Convert entire array to uint16 once for safe hex formatting
+W_in_uint16 = W_in_q8_8.astype(np.uint16).flatten()
 for i in range(8):
     float_val = W_in.flatten()[i]
     q8_8_val = W_in_q8_8.flatten()[i]
-    hex_val = q8_8_val & 0xFFFF
+    hex_val = W_in_uint16[i]  # ← Safe uint16, no overflow
     print(f"   [{i}] Float: {float_val:+7.4f} → Q8.8: {q8_8_val:6d} → 0x{hex_val:04X}")
 
 # ── Download Files ────────────────────────────────────────────
