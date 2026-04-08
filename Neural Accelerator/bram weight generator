@@ -1,0 +1,133 @@
+# ================================================================
+# CORA SNN Accelerator - Weight Generator for BRAM Initialization
+# Generates both .coe (Vivado) and .mem (Icarus/Colab) formats
+# ================================================================
+
+import numpy as np
+from google.colab import files
+
+# ── Configuration ──────────────────────────────────────────────
+NI = 16    # Input channels
+NH = 128   # Hidden neurons
+NO = 10    # Output classes
+
+# ── Generate Random Weights (for testing) ─────────────────────
+print("🔧 Generating random weights for testing...")
+np.random.seed(42)  # Reproducible
+
+W_in = np.random.uniform(-0.5, 0.5, (NI, NH)).astype(np.float32)
+W_rec = np.random.uniform(-0.5, 0.5, (NH, NH)).astype(np.float32)
+W_out = np.random.uniform(-0.5, 0.5, (NH, NO)).astype(np.float32)
+
+# ── OR Load Your Trained Weights (uncomment if you have them) ──
+# W_in = np.load('W_in.npy')
+# W_rec = np.load('W_rec.npy')
+# W_out = np.load('W_out.npy')
+
+# ── Convert to Q8.8 Fixed-Point ────────────────────────────────
+def float_to_q8_8(float_array):
+    """
+    Convert float32 array to Q8.8 fixed-point (16-bit signed)
+    Q8.8 range: -128.0 to +127.996 (practical: -1.0 to +1.0)
+    """
+    scaled = float_array * 256.0  # 2^8 fractional bits
+    clipped = np.clip(scaled, -32768, 32767)  # 16-bit signed range
+    return clipped.astype(np.int16)
+
+print("🔄 Converting to Q8.8 fixed-point format...")
+W_in_q8_8 = float_to_q8_8(W_in)
+W_rec_q8_8 = float_to_q8_8(W_rec)
+W_out_q8_8 = float_to_q8_8(W_out)
+
+# ── Generate .coe File (Xilinx Vivado Format) ─────────────────
+def generate_coe_file(weights_dict, filename):
+    """
+    Generate Xilinx .coe file for BRAM initialization
+    Format: Hexadecimal, one value per line
+    """
+    with open(filename, 'w') as f:
+        f.write("memory_initialization_radix=16;\n")
+        f.write("memory_initialization_vector=\n")
+        
+        all_weights = []
+        for name, weights in weights_dict.items():
+            print(f"  📦 {name}: {weights.shape} → {weights.size} words")
+            all_weights.extend(weights.flatten())
+        
+        total_words = len(all_weights)
+        for i, val in enumerate(all_weights):
+            # Convert to unsigned 16-bit hex
+            hex_val = val & 0xFFFF
+            f.write(f"{hex_val:04X}")
+            
+            # Add comma or semicolon
+            if i < total_words - 1:
+                f.write(",")
+            else:
+                f.write(";")
+            
+            # Newline every 16 values for readability
+            if (i + 1) % 16 == 0:
+                f.write("\n")
+    
+    print(f"✅ Generated {filename} ({total_words} words)")
+
+# ── Generate .mem File (Icarus Verilog $readmemh Format) ──────
+def generate_mem_file(weights_dict, filename):
+    """
+    Generate flat .mem file for Icarus Verilog simulation
+    Format: One hex value per line, no headers
+    """
+    with open(filename, 'w') as f:
+        for name, weights in weights_dict.items():
+            for val in weights.flatten():
+                hex_val = val & 0xFFFF
+                f.write(f"{hex_val:04X}\n")
+    
+    total_lines = sum(w.size for w in weights_dict.values())
+    print(f"✅ Generated {filename} ({total_lines} lines)")
+
+# ── Create Weight Dictionary in Correct Memory Layout ─────────
+print("\n📋 Organizing weights in BRAM memory layout:")
+print("   Address 0x0000-0x07FF: W_in  (16×128 = 2,048 words)")
+print("   Address 0x1000-0x4FFF: W_rec (128×128 = 16,384 words)")
+print("   Address 0x9000-0x94FF: W_out (128×10 = 1,280 words)")
+
+weights_for_bram = {
+    'W_in': W_in_q8_8,
+    'W_rec': W_rec_q8_8,
+    'W_out': W_out_q8_8
+}
+
+# ── Generate Both File Formats ────────────────────────────────
+print("\n🔨 Generating initialization files...")
+generate_coe_file(weights_for_bram, 'weights.coe')
+generate_mem_file(weights_for_bram, 'weights.mem')
+
+# ── Verify File Contents ──────────────────────────────────────
+print("\n📊 Verification:")
+with open('weights.coe', 'r') as f:
+    coe_lines = [l for l in f.readlines() if not l.startswith('memory')]
+    coe_values = len([v for l in coe_lines for v in l.strip().replace(',', '').replace(';', '').split()])
+    print(f"   weights.coe: {coe_values} hex values")
+
+with open('weights.mem', 'r') as f:
+    mem_lines = f.readlines()
+    print(f"   weights.mem: {len(mem_lines)} lines")
+
+# ── Show Sample Values ────────────────────────────────────────
+print("\n📝 Sample weight values (first 8 of W_in):")
+for i in range(8):
+    float_val = W_in.flatten()[i]
+    q8_8_val = W_in_q8_8.flatten()[i]
+    hex_val = q8_8_val & 0xFFFF
+    print(f"   [{i}] Float: {float_val:+7.4f} → Q8.8: {q8_8_val:6d} → 0x{hex_val:04X}")
+
+# ── Download Files ────────────────────────────────────────────
+print("\n⬇️  Downloading files...")
+files.download('weights.coe')
+files.download('weights.mem')
+
+print("\n✅ Done! Upload these files to your project:")
+print("   • weights.coe → Vivado BRAM initialization")
+print("   • weights.mem → Colab/Icarus simulation ($readmemh)")
