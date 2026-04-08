@@ -1,0 +1,20 @@
+# Add this BEFORE the weight generation section:
+
+# For PyTorch
+import torch
+state_dict = torch.load('trained_model.pth')
+W_in = state_dict['fc1.weight'].numpy().T  # Transpose if needed
+W_rec = state_dict['recurrent.weight'].numpy()
+W_out = state_dict['fc2.weight'].numpy().T
+
+# For TensorFlow/Keras
+import numpy as np
+model = tf.keras.models.load_model('trained_model.h5')
+W_in = model.layers[0].get_weights()[0]
+W_rec = model.layers[1].get_weights()[0]
+W_out = model.layers[2].get_weights()[0]
+
+# For NumPy files
+W_in = np.load('W_in.npy')
+W_rec = np.load('W_rec.npy')
+W_out = np.load('W_out.npy')
