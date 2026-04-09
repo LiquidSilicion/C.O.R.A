@@ -1,0 +1,116 @@
+module biquad_df2t #(
+    parameter SB            = 16,
+    parameter CB            = 16,
+    parameter integer B0    =   113,
+    parameter integer B1    =     0,
+    parameter integer B2    =  -113,
+    parameter integer A1    = -32517,
+    parameter integer A2    =  16157
+)(
+    input                       clk,
+    input                       rst_n,
+    input                       sample_en,
+    input  signed [SB-1:0]      x,
+    output reg signed [SB-1:0]  y
+);
+
+    // ----------------------------------------------------------
+    //  Bit width constants
+    //  WB = 32  state register width
+    //  FRAC = 14 fractional bits in Q2.14
+    // ----------------------------------------------------------
+    localparam FRAC = CB - 2;       // 14
+    localparam WB   = 2 * CB;       // 32  - state register width
+
+    // ----------------------------------------------------------
+    //  Coefficients - 16-bit signed
+    // ----------------------------------------------------------
+    wire signed [CB-1:0] coeff_b0 = $signed(B0[CB-1:0]);
+    wire signed [CB-1:0] coeff_b1 = $signed(B1[CB-1:0]);
+    wire signed [CB-1:0] coeff_b2 = $signed(B2[CB-1:0]);
+    wire signed [CB-1:0] coeff_a1 = $signed(A1[CB-1:0]);
+    wire signed [CB-1:0] coeff_a2 = $signed(A2[CB-1:0]);
+
+    // ----------------------------------------------------------
+    //  State registers - 32 bits
+    //  CH1 steady-state w amplitude ~9.26M - fits in 32-bit
+    // ----------------------------------------------------------
+    reg signed [WB-1:0] w1, w2;
+
+    // ----------------------------------------------------------
+    //  STEP 1 - Compute w0_next
+    //
+    //  w0 = x - (a1/2^14)*w1 - (a2/2^14)*w2
+    //
+    //  In fixed-point:
+    //    x_scaled  = x << 14              (32-bit, multiply domain)
+    //    mult_a1   = a1_int * w1          (48-bit product)
+    //    acc_w0    = x_scaled - mult_a1 - mult_a2  (49-bit)
+    //    w0_next   = acc_w0[45:14]        (32-bit = divide by 2^14)
+    //
+    //  CRITICAL: x_scaled must be SIGN-EXTENDED to 49 bits
+    //            NOT concatenated with zeros (that gives x * 2^16)
+    // ----------------------------------------------------------
+    wire signed [WB-1:0]    x_ext    = {{(WB-SB){x[SB-1]}}, x};
+    wire signed [WB-1:0]    x_scaled = x_ext <<< FRAC;
+
+    wire signed [WB+CB-1:0] mult_a1  = coeff_a1 * w1;
+    wire signed [WB+CB-1:0] mult_a2  = coeff_a2 * w2;
+
+    // sign-extend x_scaled from WB=32 to WB+CB+1=49 bits
+    wire signed [WB+CB:0] acc_w0 = {{(CB+1){x_scaled[WB-1]}}, x_scaled}
+                                    - mult_a1
+                                    - mult_a2;
+
+    // divide by 2^14: take bits [45:14] = 32 bits
+    wire signed [WB-1:0] w0_next = acc_w0[WB-1+FRAC : FRAC];
+
+    // ----------------------------------------------------------
+    //  STEP 2 - Compute y
+    //
+    //  y = (b0/2^14)*w0 + (b1/2^14)*w1 + (b2/2^14)*w2
+    //
+    //  mult_b0 = b0_int * w0_next   (48-bit)
+    //  acc_y   = sum of three 48-bit products  (49-bit)
+    //  y_full  = acc_y[46:14]       (33-bit)
+    //  y_sat   = saturate to 16-bit
+    // ----------------------------------------------------------
+    wire signed [WB+CB-1:0] mult_b0 = coeff_b0 * w0_next;
+    wire signed [WB+CB-1:0] mult_b1 = coeff_b1 * w1;
+    wire signed [WB+CB-1:0] mult_b2 = coeff_b2 * w2;
+
+    wire signed [WB+CB:0]   acc_y   = mult_b0 + mult_b1 + mult_b2;
+
+    // y_full = acc_y >> 14, keeping 33 bits for saturation guard
+    wire signed [WB:0] y_full = acc_y[WB+FRAC : FRAC];
+
+    // ----------------------------------------------------------
+    //  STEP 3 - Saturate 33-bit y_full to 16-bit y_sat
+    //
+    //  Positive overflow: sign=0 but upper bits have ones ? clamp +32767
+    //  Negative overflow: sign=1 but upper bits not all ones ? clamp -32768
+    // ----------------------------------------------------------
+    wire y_pos_overflow = (~y_full[WB])   & (|y_full[WB-1 : SB-1]);
+    wire y_neg_overflow = ( y_full[WB])   & (~&y_full[WB-1 : SB-1]);
+
+    wire signed [SB-1:0] y_sat;
+    assign y_sat = y_pos_overflow ? {1'b0, {(SB-1){1'b1}}} :   // +32767
+                   y_neg_overflow ? {1'b1, {(SB-1){1'b0}}} :   // -32768
+                                    y_full[SB-1:0];
+
+    // ----------------------------------------------------------
+    //  Registered update
+    // ----------------------------------------------------------
+    always @(posedge clk) begin
+        if (!rst_n) begin
+            w1 <= {WB{1'b0}};
+            w2 <= {WB{1'b0}};
+            y  <= {SB{1'b0}};
+        end else if (sample_en) begin
+            w2 <= w1;
+            w1 <= w0_next;
+            y  <= y_sat;
+        end
+    end
+
+endmodule
