@@ -1,24 +1,3 @@
-============================================================
-//  aer_encoder_pro.v
-//  Robust, lossless AER packetizer (production-ready)
-//
-//  Features:
-//    - No spike loss (continuous accumulation)
-//    - Handles simultaneous spikes
-//    - Proper valid/ready handshake
-//    - Timestamp per sample (shared across burst)
-//    - Fully streaming (no dead cycles)
-//
-//  Input:
-//    spike[15:0]  : 1-cycle pulses from LIF neurons
-//    sample_en    : 16kHz step pulse
-//
-//  Output:
-//    data[23:0]   : {channel_id[3:0], timestamp[19:0]}
-//    aer_valid    : packet valid
-//    aer_ready    : downstream ready
-// ============================================================
-
 module aer_encoder_pro (
     input  wire        clk,
     input  wire        rst_n,
