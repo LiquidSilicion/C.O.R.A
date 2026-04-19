@@ -1,5 +1,5 @@
 module lif_array #(
-    parameter NH    = 8,               // neurons - start at 8, scale to 128
+    parameter NH    = 128,               // neurons - 128
     parameter ALPHA = 16'h00E0,        // α = 0.875 in Q8.8
     parameter THETA = 16'h0100         // θ = 1.0   in Q8.8
 )(
