@@ -211,24 +211,3 @@ always @(posedge clk) begin
 end
 
 endmodule
-`default_nettype wire
-
-// =============================================================================
-//  ZCU104 XDC CONSTRAINTS  (include in your project .xdc)
-// =============================================================================
-//
-//  # Primary clock - ZCU104 200 MHz system clock on PL (adjust pin for your board)
-//  create_clock -period 5.000 -name clk_pl [get_ports clk]
-//
-//  # Multicycle path for the adder → argmax tree combinational path
-//  # (adder output is purely combinational; registered at pred_class/pred_score)
-//  # If Vivado reports the path as failing at 200 MHz, uncomment:
-//  # set_multicycle_path -setup 2 -from [get_cells score_N_reg*] \
-//  #                               -to   [get_cells pred_class_reg*]
-//  # set_multicycle_path -hold  1 -from [get_cells score_N_reg*] \
-//  #                               -to   [get_cells pred_class_reg*]
-//
-//  # Reset false path (if rst_n comes from PS or MMCM locked signal)
-//  # set_false_path -from [get_ports rst_n]
-//
-// =============================================================================
