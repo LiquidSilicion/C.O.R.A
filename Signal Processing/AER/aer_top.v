@@ -23,7 +23,7 @@ module aer_top (
     input  wire        aer_ready
 );
 
-    aer_encoder u_aer (
+    aer_encoder_pro u_aer (
         .clk      (clk),
         .rst_n    (rst_n),
         .sample_en(sample_en),
