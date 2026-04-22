@@ -1,0 +1,244 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<GenRun Id="impl_1" LaunchPart="xczu7ev-ffvc1156-2-e" LaunchTime="1776852462">
+  <File Type="PA-TCL" Name="sp_pipeline.tcl"/>
+  <File Type="REPORTS-TCL" Name="sp_pipeline_reports.tcl"/>
+  <File Type="INIT-TIMING" Name="sp_pipeline_timing_summary_init.rpt"/>
+  <File Type="OPT-DCP" Name="sp_pipeline_opt.dcp"/>
+  <File Type="OPT-DRC" Name="sp_pipeline_drc_opted.rpt"/>
+  <File Type="OPT-METHODOLOGY-DRC" Name="sp_pipeline_methodology_drc_opted.rpt"/>
+  <File Type="OPT-HWDEF" Name="sp_pipeline.hwdef"/>
+  <File Type="OPT-TIMING" Name="sp_pipeline_timing_summary_opted.rpt"/>
+  <File Type="OPT-RQA-PB" Name="sp_pipeline_rqa_opted.pb"/>
+  <File Type="PWROPT-DCP" Name="sp_pipeline_pwropt.dcp"/>
+  <File Type="PWROPT-DRC" Name="sp_pipeline_drc_pwropted.rpt"/>
+  <File Type="PWROPT-TIMING" Name="sp_pipeline_timing_summary_pwropted.rpt"/>
+  <File Type="PLACE-DCP" Name="sp_pipeline_placed.dcp"/>
+  <File Type="PLACE-IO" Name="sp_pipeline_io_placed.rpt"/>
+  <File Type="PLACE-CLK" Name="sp_pipeline_clock_utilization_placed.rpt"/>
+  <File Type="PLACE-UTIL" Name="sp_pipeline_utilization_placed.rpt"/>
+  <File Type="PLACE-UTIL-PB" Name="sp_pipeline_utilization_placed.pb"/>
+  <File Type="PLACE-CTRL" Name="sp_pipeline_control_sets_placed.rpt"/>
+  <File Type="PLACE-SIMILARITY" Name="sp_pipeline_incremental_reuse_placed.rpt"/>
+  <File Type="PLACE-PRE-SIMILARITY" Name="sp_pipeline_incremental_reuse_pre_placed.rpt"/>
+  <File Type="PLACE-TIMING" Name="sp_pipeline_timing_summary_placed.rpt"/>
+  <File Type="PLACE-RQA-PB" Name="sp_pipeline_rqa_placed.pb"/>
+  <File Type="POSTPLACE-PWROPT-DCP" Name="sp_pipeline_postplace_pwropt.dcp"/>
+  <File Type="POSTPLACE-PWROPT-TIMING" Name="sp_pipeline_timing_summary_postplace_pwropted.rpt"/>
+  <File Type="PHYSOPT-DCP" Name="sp_pipeline_physopt.dcp"/>
+  <File Type="PHYSOPT-DRC" Name="sp_pipeline_drc_physopted.rpt"/>
+  <File Type="PHYSOPT-TIMING" Name="sp_pipeline_timing_summary_physopted.rpt"/>
+  <File Type="ROUTE-ERROR-DCP" Name="sp_pipeline_routed_error.dcp"/>
+  <File Type="ROUTE-DCP" Name="sp_pipeline_routed.dcp"/>
+  <File Type="ROUTE-BLACKBOX-DCP" Name="sp_pipeline_routed_bb.dcp"/>
+  <File Type="ROUTE-DRC" Name="sp_pipeline_drc_routed.rpt"/>
+  <File Type="ROUTE-DRC-PB" Name="sp_pipeline_drc_routed.pb"/>
+  <File Type="ROUTE-DRC-RPX" Name="sp_pipeline_drc_routed.rpx"/>
+  <File Type="ROUTE-METHODOLOGY-DRC" Name="sp_pipeline_methodology_drc_routed.rpt"/>
+  <File Type="ROUTE-METHODOLOGY-DRC-RPX" Name="sp_pipeline_methodology_drc_routed.rpx"/>
+  <File Type="ROUTE-METHODOLOGY-DRC-PB" Name="sp_pipeline_methodology_drc_routed.pb"/>
+  <File Type="ROUTE-PWR" Name="sp_pipeline_power_routed.rpt"/>
+  <File Type="ROUTE-PWR-SUM" Name="sp_pipeline_power_summary_routed.pb"/>
+  <File Type="ROUTE-PWR-RPX" Name="sp_pipeline_power_routed.rpx"/>
+  <File Type="ROUTE-STATUS" Name="sp_pipeline_route_status.rpt"/>
+  <File Type="ROUTE-STATUS-PB" Name="sp_pipeline_route_status.pb"/>
+  <File Type="ROUTE-TIMINGSUMMARY" Name="sp_pipeline_timing_summary_routed.rpt"/>
+  <File Type="ROUTE-TIMING-PB" Name="sp_pipeline_timing_summary_routed.pb"/>
+  <File Type="ROUTE-TIMING-RPX" Name="sp_pipeline_timing_summary_routed.rpx"/>
+  <File Type="ROUTE-SIMILARITY" Name="sp_pipeline_incremental_reuse_routed.rpt"/>
+  <File Type="ROUTE-CLK" Name="sp_pipeline_clock_utilization_routed.rpt"/>
+  <File Type="ROUTE-BUS-SKEW" Name="sp_pipeline_bus_skew_routed.rpt"/>
+  <File Type="ROUTE-BUS-SKEW-PB" Name="sp_pipeline_bus_skew_routed.pb"/>
+  <File Type="ROUTE-BUS-SKEW-RPX" Name="sp_pipeline_bus_skew_routed.rpx"/>
+  <File Type="ROUTE-RQS-PB" Name="sp_pipeline_rqs_routed.pb"/>
+  <File Type="POSTROUTE-PHYSOPT-DCP" Name="sp_pipeline_postroute_physopt.dcp"/>
+  <File Type="POSTROUTE-PHYSOPT-BLACKBOX-DCP" Name="sp_pipeline_postroute_physopt_bb.dcp"/>
+  <File Type="POSTROUTE-PHYSOPT-TIMING" Name="sp_pipeline_timing_summary_postroute_physopted.rpt"/>
+  <File Type="POSTROUTE-PHYSOPT-TIMING-PB" Name="sp_pipeline_timing_summary_postroute_physopted.pb"/>
+  <File Type="POSTROUTE-PHYSOPT-TIMING-RPX" Name="sp_pipeline_timing_summary_postroute_physopted.rpx"/>
+  <File Type="POSTROUTE-PHYSOPT-BUS-SKEW" Name="sp_pipeline_bus_skew_postroute_physopted.rpt"/>
+  <File Type="POSTROUTE-PHYSOPT-BUS-SKEW-PB" Name="sp_pipeline_bus_skew_postroute_physopted.pb"/>
+  <File Type="POSTROUTE-PHYSOPT-BUS-SKEW-RPX" Name="sp_pipeline_bus_skew_postroute_physopted.rpx"/>
+  <File Type="BG-BIT" Name="sp_pipeline.bit"/>
+  <File Type="BG-BIN" Name="sp_pipeline.bin"/>
+  <File Type="BITSTR-MSK" Name="sp_pipeline.msk"/>
+  <File Type="BITSTR-RBT" Name="sp_pipeline.rbt"/>
+  <File Type="BITSTR-NKY" Name="sp_pipeline.nky"/>
+  <File Type="BITSTR-BMM" Name="sp_pipeline_bd.bmm"/>
+  <File Type="BITSTR-MMI" Name="sp_pipeline.mmi"/>
+  <File Type="PDI-FILE" Name="sp_pipeline.pdi"/>
+  <File Type="BOOT-PDI-FILE" Name="sp_pipeline_boot.pdi"/>
+  <File Type="PL-PDI-FILE" Name="sp_pipeline_pld.pdi"/>
+  <File Type="RCFI_FILE" Name="sp_pipeline.rcfi"/>
+  <File Type="CFI_FILE" Name="sp_pipeline.cfi"/>
+  <File Type="RNPI_FILE" Name="sp_pipeline.rnpi"/>
+  <File Type="NPI_FILE" Name="sp_pipeline.npi"/>
+  <File Type="RBD_FILE" Name="sp_pipeline.rbd"/>
+  <File Type="BITSTR-LTX" Name="debug_nets.ltx"/>
+  <File Type="BITSTR-LTX" Name="sp_pipeline.ltx"/>
+  <File Type="BITSTR-SYSDEF" Name="sp_pipeline.sysdef"/>
+  <File Type="BG-BGN" Name="sp_pipeline.bgn"/>
+  <File Type="BG-DRC" Name="sp_pipeline.drc"/>
+  <File Type="RDI-RDI" Name="sp_pipeline.vdi"/>
+  <File Type="WBT-USG" Name="usage_statistics_webtalk.html"/>
+  <File Type="ROUTE-RQS" Name="sp_pipeline_routed.rqs"/>
+  <File Type="POSTROUTE-PHYSOPT-RQS" Name="sp_pipeline_postroute_physopted.rqs"/>
+  <File Type="ROUTE-RQS-RPT" Name="route_report_qor_suggestions_0.rpt"/>
+  <File Type="POSTROUTE-PHYSOPT-RQS-RPT" Name="postroute_physopt_report_qor_suggestions_0.rpt"/>
+  <FileSet Name="sources" Type="DesignSrcs" RelSrcDir="$PSRCDIR/sources_1" RelGenDir="$PGENDIR/sources_1">
+    <Filter Type="Srcs"/>
+    <File Path="$PPRDIR/../Signal Processing Pipeline/adaptation_filter.v">
+      <FileInfo>
+        <Attr Name="UsedIn" Val="synthesis"/>
+        <Attr Name="UsedIn" Val="implementation"/>
+        <Attr Name="UsedIn" Val="simulation"/>
+      </FileInfo>
+    </File>
+    <File Path="$PPRDIR/../Signal Processing Pipeline/aer_encoder.v">
+      <FileInfo>
+        <Attr Name="UsedIn" Val="synthesis"/>
+        <Attr Name="UsedIn" Val="implementation"/>
+        <Attr Name="UsedIn" Val="simulation"/>
+      </FileInfo>
+    </File>
+    <File Path="$PPRDIR/../Signal Processing Pipeline/audio_rom.v">
+      <FileInfo>
+        <Attr Name="UsedIn" Val="synthesis"/>
+        <Attr Name="UsedIn" Val="implementation"/>
+        <Attr Name="UsedIn" Val="simulation"/>
+      </FileInfo>
+    </File>
+    <File Path="$PPRDIR/../Signal Processing Pipeline/biquad.v">
+      <FileInfo>
+        <Attr Name="UsedIn" Val="synthesis"/>
+        <Attr Name="UsedIn" Val="implementation"/>
+        <Attr Name="UsedIn" Val="simulation"/>
+      </FileInfo>
+    </File>
+    <File Path="$PPRDIR/../Signal Processing Pipeline/erb_coefficients.vh">
+      <FileInfo>
+        <Attr Name="UsedIn" Val="synthesis"/>
+        <Attr Name="UsedIn" Val="simulation"/>
+        <Attr Name="IsVisible" Val="1"/>
+      </FileInfo>
+    </File>
+    <File Path="$PPRDIR/../Signal Processing Pipeline/fft_filterbank.v">
+      <FileInfo>
+        <Attr Name="UsedIn" Val="synthesis"/>
+        <Attr Name="UsedIn" Val="implementation"/>
+        <Attr Name="UsedIn" Val="simulation"/>
+      </FileInfo>
+    </File>
+    <File Path="$PPRDIR/../Signal Processing Pipeline/half_wave.v">
+      <FileInfo>
+        <Attr Name="UsedIn" Val="synthesis"/>
+        <Attr Name="UsedIn" Val="implementation"/>
+        <Attr Name="UsedIn" Val="simulation"/>
+      </FileInfo>
+    </File>
+    <File Path="$PPRDIR/../Signal Processing Pipeline/ihc_channel.v">
+      <FileInfo>
+        <Attr Name="UsedIn" Val="synthesis"/>
+        <Attr Name="UsedIn" Val="implementation"/>
+        <Attr Name="UsedIn" Val="simulation"/>
+      </FileInfo>
+    </File>
+    <File Path="$PPRDIR/../Signal Processing Pipeline/ihc_top.v">
+      <FileInfo>
+        <Attr Name="UsedIn" Val="synthesis"/>
+        <Attr Name="UsedIn" Val="implementation"/>
+        <Attr Name="UsedIn" Val="simulation"/>
+      </FileInfo>
+    </File>
+    <File Path="$PPRDIR/../Signal Processing Pipeline/lif_neuron.v">
+      <FileInfo>
+        <Attr Name="UsedIn" Val="synthesis"/>
+        <Attr Name="UsedIn" Val="implementation"/>
+        <Attr Name="UsedIn" Val="simulation"/>
+      </FileInfo>
+    </File>
+    <File Path="$PPRDIR/../Signal Processing Pipeline/lif_top.v">
+      <FileInfo>
+        <Attr Name="UsedIn" Val="synthesis"/>
+        <Attr Name="UsedIn" Val="implementation"/>
+        <Attr Name="UsedIn" Val="simulation"/>
+      </FileInfo>
+    </File>
+    <File Path="$PPRDIR/../Signal Processing Pipeline/low_pass.v">
+      <FileInfo>
+        <Attr Name="UsedIn" Val="synthesis"/>
+        <Attr Name="UsedIn" Val="implementation"/>
+        <Attr Name="UsedIn" Val="simulation"/>
+      </FileInfo>
+    </File>
+    <File Path="$PPRDIR/../Signal Processing Pipeline/non_linear.v">
+      <FileInfo>
+        <Attr Name="UsedIn" Val="synthesis"/>
+        <Attr Name="UsedIn" Val="implementation"/>
+        <Attr Name="UsedIn" Val="simulation"/>
+      </FileInfo>
+    </File>
+    <File Path="$PPRDIR/../Signal Processing Pipeline/pre_emphasis.v">
+      <FileInfo>
+        <Attr Name="UsedIn" Val="synthesis"/>
+        <Attr Name="UsedIn" Val="implementation"/>
+        <Attr Name="UsedIn" Val="simulation"/>
+      </FileInfo>
+    </File>
+    <File Path="$PPRDIR/../Signal Processing Pipeline/sp_pipeline.v">
+      <FileInfo>
+        <Attr Name="UsedIn" Val="synthesis"/>
+        <Attr Name="UsedIn" Val="implementation"/>
+        <Attr Name="UsedIn" Val="simulation"/>
+      </FileInfo>
+    </File>
+    <File Path="$PPRDIR/../Signal Processing Pipeline/tb_sp_pipeline.v">
+      <FileInfo>
+        <Attr Name="AutoDisabled" Val="1"/>
+        <Attr Name="UsedIn" Val="simulation"/>
+      </FileInfo>
+    </File>
+    <File Path="$PSRCDIR/sources_1/new/coefficients.mem">
+      <FileInfo>
+        <Attr Name="UsedIn" Val="synthesis"/>
+        <Attr Name="UsedIn" Val="simulation"/>
+      </FileInfo>
+    </File>
+    <Config>
+      <Option Name="DesignMode" Val="RTL"/>
+      <Option Name="TopModule" Val="sp_pipeline"/>
+      <Option Name="TopAutoSet" Val="TRUE"/>
+    </Config>
+  </FileSet>
+  <FileSet Name="constrs_in" Type="Constrs" RelSrcDir="$PSRCDIR/constrs_1" RelGenDir="$PGENDIR/constrs_1">
+    <Filter Type="Constrs"/>
+    <Config>
+      <Option Name="ConstrsType" Val="XDC"/>
+    </Config>
+  </FileSet>
+  <FileSet Name="utils" Type="Utils" RelSrcDir="$PSRCDIR/utils_1" RelGenDir="$PGENDIR/utils_1">
+    <Filter Type="Utils"/>
+    <File Path="$PSRCDIR/utils_1/imports/synth_1/sp_pipeline.dcp">
+      <FileInfo>
+        <Attr Name="UsedIn" Val="synthesis"/>
+        <Attr Name="UsedIn" Val="implementation"/>
+        <Attr Name="UsedInSteps" Val="synth_1"/>
+        <Attr Name="AutoDcp" Val="1"/>
+      </FileInfo>
+    </File>
+    <Config>
+      <Option Name="TopAutoSet" Val="TRUE"/>
+    </Config>
+  </FileSet>
+  <Strategy Version="1" Minor="2">
+    <StratHandle Name="Vivado Implementation Defaults" Flow="Vivado Implementation 2024"/>
+    <Step Id="init_design"/>
+    <Step Id="opt_design"/>
+    <Step Id="power_opt_design"/>
+    <Step Id="place_design"/>
+    <Step Id="post_place_power_opt_design"/>
+    <Step Id="phys_opt_design"/>
+    <Step Id="route_design"/>
+    <Step Id="post_route_phys_opt_design"/>
+    <Step Id="write_bitstream"/>
+  </Strategy>
+</GenRun>
