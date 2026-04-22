@@ -1,0 +1,114 @@
+module adaptation_filter(    
+    input  wire               clk,
+    input  wire               rst_n,
+    input  wire               valid_in,
+    input  wire signed [15:0] x_in,        // Q1.15 from nonlinear compression, bipolar
+    output reg  signed [15:0] y_out,        // signed output, can go negative (undershoot)
+    output reg                valid_out
+
+    );
+        // =============================================
+    // Coefficients in Q1.15 (scaled by 32768)
+    // All derived from τ_fast=5ms, τ_slow=50ms, fs=16000Hz
+    //
+    // ALPHA_FAST  = e^(-1/(16000*0.005)) = e^(-1/80)  = 0.9876 * 32768 = 32358
+    // ALPHA_SLOW  = e^(-1/(16000*0.050)) = e^(-1/800) = 0.9987 * 32768 = 32725
+    // ONE_M_AF    = (1 - 0.9876) * 32768  = 0.0124 * 32768 = 406
+    // ONE_M_AS    = (1 - 0.9987) * 32768  = 0.0013 * 32768 = 43
+    // GAIN_FAST   = 0.3 * 32768 = 9830   (fast pool dominance, Meddis 1986)
+    // GAIN_SLOW   = 0.1 * 32768 = 3277   (slow pool secondary, Meddis 1986)
+    // =============================================
+    localparam signed [15:0] ALPHA_FAST  =  16'sd32358;
+    localparam signed [15:0] ALPHA_SLOW  =  16'sd32725;
+    localparam signed [15:0] ONE_M_AF    =  16'sd406;
+    localparam signed [15:0] ONE_M_AS    =  16'sd43;
+    localparam signed [15:0] GAIN_FAST   =  16'sd9830;
+    localparam signed [15:0] GAIN_SLOW   =  16'sd3277;
+ 
+    // =============================================
+    // State registers
+    // state_fast = running average over 5ms  (fast vesicle pool level)
+    // state_slow = running average over 50ms (slow vesicle pool level)
+    // Both hold their value between valid pulses
+    // Both reset to 0 (no sound heard, pools empty)
+    // =============================================
+    reg signed [15:0] state_fast;
+    reg signed [15:0] state_slow;
+ 
+    // =============================================
+    // Internal wires - 32-bit to prevent overflow
+    // 16-bit x 16-bit multiplication = 32-bit result
+    // =============================================
+ 
+    // Fast state update wires
+    // state_fast[n] = alpha_fast * state_fast[n-1] + (1-alpha_fast) * x[n]
+    wire signed [31:0] fast_decay;      // alpha_fast * old state (memory term)
+    wire signed [31:0] fast_input;      // (1-alpha_fast) * x_in  (update term)
+    wire signed [15:0] new_state_fast;  // scaled back to 16-bit
+ 
+    // Slow state update wires
+    // state_slow[n] = alpha_slow * state_slow[n-1] + (1-alpha_slow) * x[n]
+    wire signed [31:0] slow_decay;      // alpha_slow * old state
+    wire signed [31:0] slow_input;      // (1-alpha_slow) * x_in
+    wire signed [15:0] new_state_slow;  // scaled back to 16-bit
+ 
+    // Output computation wires
+    // y[n] = x[n] - gain_fast * state_fast[n] - gain_slow * state_slow[n]
+    wire signed [31:0] subtract_fast;   // gain_fast * new_state_fast
+    wire signed [31:0] subtract_slow;   // gain_slow * new_state_slow
+    wire signed [15:0] y_next;          // final output before registering
+ 
+    // =============================================
+    // Fast state computation (combinational)
+    // =============================================
+    assign fast_decay     = ALPHA_FAST * state_fast;
+    assign fast_input     = ONE_M_AF   * x_in;
+    // Add both terms, shift right by 15 to scale back from Q2.30 to Q1.15
+    // >>> is arithmetic right shift - preserves sign bit for negative values
+    // >> would shift in zeros and corrupt negative numbers
+    assign new_state_fast = (fast_decay + fast_input) >>> 15;
+ 
+    // =============================================
+    // Slow state computation (combinational)
+    // =============================================
+    assign slow_decay     = ALPHA_SLOW * state_slow;
+    assign slow_input     = ONE_M_AS   * x_in;
+    assign new_state_slow = (slow_decay + slow_input) >>> 15;
+ 
+    // =============================================
+    // Output computation (combinational)
+    // y = x - 0.3*state_fast - 0.1*state_slow
+    // Subtract running averages from input
+    // What remains = new events = onsets = surprise
+    // =============================================
+    assign subtract_fast = GAIN_FAST * new_state_fast;
+    assign subtract_slow = GAIN_SLOW * new_state_slow;
+    assign y_next = x_in
+                  - $signed(subtract_fast >>> 15)
+                  - $signed(subtract_slow >>> 15);
+ 
+    // =============================================
+    // Sequential block
+    // Update states and output on every valid pulse
+    // States hold between valid pulses (pool levels persist)
+    // NO saturation clamp - output can go negative (undershoot)
+    // Negative values carry recovery information for downstream stages
+    // =============================================
+    always @(posedge clk) begin
+        if (!rst_n) begin
+            state_fast <= 16'sd0;
+            state_slow <= 16'sd0;
+            y_out      <= 16'sd0;
+            valid_out  <= 1'b0;
+        end
+        else if (valid_in) begin
+            state_fast <= new_state_fast;
+            state_slow <= new_state_slow;
+            y_out      <= y_next;
+            valid_out  <= 1'b1;
+        end
+        else begin
+            valid_out  <= 1'b0;
+        end
+    end
+endmodule
