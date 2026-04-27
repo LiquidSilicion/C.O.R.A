@@ -1,0 +1,11 @@
+always @(posedge clk or posedge reset) begin
+    if (reset) begin
+        clk_div_counter <= 0;
+        clk_16khz <= 0;
+    end else if (clk_div_counter == 13'd7812) begin
+        clk_div_counter <= 0;
+        clk_16khz <= ~clk_16khz;  // ← FLIP it, not set it!
+    end else begin
+        clk_div_counter <= clk_div_counter + 1;
+    end
+end
