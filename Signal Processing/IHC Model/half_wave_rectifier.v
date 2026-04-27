@@ -48,7 +48,7 @@ module half_wave_rectifier(
     // Only after adaptation is complete do we zero negatives
     // =============================================
  
-    always @(posedge clk) begin
+    always @(posedge clk or posedge rst) begin
         if (rst) begin
             y_out     <= 16'd0;
             valid_out <= 1'b0;
