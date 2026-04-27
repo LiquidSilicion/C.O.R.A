@@ -102,7 +102,7 @@ module lowpass_filter(
                     (acc[31] == 1'b1 && acc[30:29] != 2'b11) ? -16'sd32768 :
                     acc[29:14];
 
-    always @(posedge clk) begin
+    always @(posedge clk or posedge rst) begin
         if (rst) begin
             x_n1      <= 16'sd0;
             x_n2      <= 16'sd0;
