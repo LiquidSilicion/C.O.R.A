@@ -1,0 +1,15 @@
+// Clock Generation: 125 MHz → Global Clock
+    //==================================================
+    wire clk_125_bufg;
+    wire clk;  // Main system clock (125 MHz)
+    
+    IBUFDS ibufds_inst (
+        .I(clk_125_p),
+        .IB(clk_125_n),
+        .O(clk_125_bufg)
+    );
+
+    BUFG bufg_inst (
+        .I(clk_125_bufg),
+        .O(clk)
+    );
