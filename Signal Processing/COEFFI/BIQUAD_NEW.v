@@ -8,7 +8,7 @@ module biquad_df2t #(
     parameter integer A2    =  16157
 )(
     input                       clk,
-    input                       rst_n,
+    input                       rst,
     input                       sample_en,
     input  signed [SB-1:0]      x,
     output reg signed [SB-1:0]  y
@@ -38,7 +38,7 @@ module biquad_df2t #(
     // ----------------------------------------------------------
     reg signed [SB-1:0] x_reg;
     always @(posedge clk) begin
-        if (!rst_n)         x_reg <= {SB{1'b0}};
+        if (rst)         x_reg <= {SB{1'b0}};
         else if (sample_en) x_reg <= x;
     end
 
@@ -86,7 +86,7 @@ module biquad_df2t #(
     //  ? 6250x less switching than 100MHz worst case
     // ----------------------------------------------------------
     always @(posedge clk) begin
-        if (!rst_n) begin
+        if (rst) begin
             w1 <= {WB{1'b0}};
             w2 <= {WB{1'b0}};
             y  <= {SB{1'b0}};
