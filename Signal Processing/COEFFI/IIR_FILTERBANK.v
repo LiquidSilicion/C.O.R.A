@@ -6,7 +6,7 @@ module erb_filterbank_top #(
     parameter CB = 16    // coefficient bits
 )(
     input                   clk,
-    input                   rst_n,
+    input                   rst,
     input                   sample_en,
     input  signed [SB-1:0]  x_in,
 
@@ -37,7 +37,7 @@ module erb_filterbank_top #(
     //  tells downstream IHC: all y_ch outputs are updated
     // ----------------------------------------------------------
     always @(posedge clk) begin
-        if (!rst_n)
+        if (rst)
             y_valid <= 1'b0;
         else
             y_valid <= sample_en;
@@ -51,7 +51,7 @@ module erb_filterbank_top #(
         .B0(`CH1_B0),  .B1(`CH1_B1),  .B2(`CH1_B2),
         .A1(`CH1_A1),  .A2(`CH1_A2)
     ) u_ch1 (
-        .clk(clk), .rst_n(rst_n), .sample_en(sample_en),
+        .clk(clk), .rst(rst), .sample_en(sample_en),
         .x(x_in), .y(y_ch1)
     );
 
@@ -63,7 +63,7 @@ module erb_filterbank_top #(
         .B0(`CH2_B0),  .B1(`CH2_B1),  .B2(`CH2_B2),
         .A1(`CH2_A1),  .A2(`CH2_A2)
     ) u_ch2 (
-        .clk(clk), .rst_n(rst_n), .sample_en(sample_en),
+        .clk(clk), .rst(rst), .sample_en(sample_en),
         .x(x_in), .y(y_ch2)
     );
 
@@ -75,7 +75,7 @@ module erb_filterbank_top #(
         .B0(`CH3_B0),  .B1(`CH3_B1),  .B2(`CH3_B2),
         .A1(`CH3_A1),  .A2(`CH3_A2)
     ) u_ch3 (
-        .clk(clk), .rst_n(rst_n), .sample_en(sample_en),
+        .clk(clk), .rst(rst), .sample_en(sample_en),
         .x(x_in), .y(y_ch3)
     );
 
@@ -87,7 +87,7 @@ module erb_filterbank_top #(
         .B0(`CH4_B0),  .B1(`CH4_B1),  .B2(`CH4_B2),
         .A1(`CH4_A1),  .A2(`CH4_A2)
     ) u_ch4 (
-        .clk(clk), .rst_n(rst_n), .sample_en(sample_en),
+        .clk(clk), .rst(rst), .sample_en(sample_en),
         .x(x_in), .y(y_ch4)
     );
 
@@ -99,7 +99,7 @@ module erb_filterbank_top #(
         .B0(`CH5_B0),  .B1(`CH5_B1),  .B2(`CH5_B2),
         .A1(`CH5_A1),  .A2(`CH5_A2)
     ) u_ch5 (
-        .clk(clk), .rst_n(rst_n), .sample_en(sample_en),
+        .clk(clk), .rst(rst), .sample_en(sample_en),
         .x(x_in), .y(y_ch5)
     );
 
@@ -111,7 +111,7 @@ module erb_filterbank_top #(
         .B0(`CH6_B0),  .B1(`CH6_B1),  .B2(`CH6_B2),
         .A1(`CH6_A1),  .A2(`CH6_A2)
     ) u_ch6 (
-        .clk(clk), .rst_n(rst_n), .sample_en(sample_en),
+        .clk(clk), .rst(rst), .sample_en(sample_en),
         .x(x_in), .y(y_ch6)
     );
 
@@ -123,7 +123,7 @@ module erb_filterbank_top #(
         .B0(`CH7_B0),  .B1(`CH7_B1),  .B2(`CH7_B2),
         .A1(`CH7_A1),  .A2(`CH7_A2)
     ) u_ch7 (
-        .clk(clk), .rst_n(rst_n), .sample_en(sample_en),
+        .clk(clk), .rst(rst), .sample_en(sample_en),
         .x(x_in), .y(y_ch7)
     );
 
@@ -135,7 +135,7 @@ module erb_filterbank_top #(
         .B0(`CH8_B0),  .B1(`CH8_B1),  .B2(`CH8_B2),
         .A1(`CH8_A1),  .A2(`CH8_A2)
     ) u_ch8 (
-        .clk(clk), .rst_n(rst_n), .sample_en(sample_en),
+        .clk(clk), .rst(rst), .sample_en(sample_en),
         .x(x_in), .y(y_ch8)
     );
 
@@ -147,7 +147,7 @@ module erb_filterbank_top #(
         .B0(`CH9_B0),  .B1(`CH9_B1),  .B2(`CH9_B2),
         .A1(`CH9_A1),  .A2(`CH9_A2)
     ) u_ch9 (
-        .clk(clk), .rst_n(rst_n), .sample_en(sample_en),
+        .clk(clk), .rst(rst), .sample_en(sample_en),
         .x(x_in), .y(y_ch9)
     );
 
@@ -159,7 +159,7 @@ module erb_filterbank_top #(
         .B0(`CH10_B0), .B1(`CH10_B1), .B2(`CH10_B2),
         .A1(`CH10_A1), .A2(`CH10_A2)
     ) u_ch10 (
-        .clk(clk), .rst_n(rst_n), .sample_en(sample_en),
+        .clk(clk), .rst(rst), .sample_en(sample_en),
         .x(x_in), .y(y_ch10)
     );
 
@@ -171,7 +171,7 @@ module erb_filterbank_top #(
         .B0(`CH11_B0), .B1(`CH11_B1), .B2(`CH11_B2),
         .A1(`CH11_A1), .A2(`CH11_A2)
     ) u_ch11 (
-        .clk(clk), .rst_n(rst_n), .sample_en(sample_en),
+        .clk(clk), .rst(rst), .sample_en(sample_en),
         .x(x_in), .y(y_ch11)
     );
 
@@ -183,7 +183,7 @@ module erb_filterbank_top #(
         .B0(`CH12_B0), .B1(`CH12_B1), .B2(`CH12_B2),
         .A1(`CH12_A1), .A2(`CH12_A2)
     ) u_ch12 (
-        .clk(clk), .rst_n(rst_n), .sample_en(sample_en),
+        .clk(clk), .rst(rst), .sample_en(sample_en),
         .x(x_in), .y(y_ch12)
     );
 
@@ -195,7 +195,7 @@ module erb_filterbank_top #(
         .B0(`CH13_B0), .B1(`CH13_B1), .B2(`CH13_B2),
         .A1(`CH13_A1), .A2(`CH13_A2)
     ) u_ch13 (
-        .clk(clk), .rst_n(rst_n), .sample_en(sample_en),
+        .clk(clk), .rst(rst), .sample_en(sample_en),
         .x(x_in), .y(y_ch13)
     );
 
@@ -207,7 +207,7 @@ module erb_filterbank_top #(
         .B0(`CH14_B0), .B1(`CH14_B1), .B2(`CH14_B2),
         .A1(`CH14_A1), .A2(`CH14_A2)
     ) u_ch14 (
-        .clk(clk), .rst_n(rst_n), .sample_en(sample_en),
+        .clk(clk), .rst(rst), .sample_en(sample_en),
         .x(x_in), .y(y_ch14)
     );
 
@@ -219,7 +219,7 @@ module erb_filterbank_top #(
         .B0(`CH15_B0), .B1(`CH15_B1), .B2(`CH15_B2),
         .A1(`CH15_A1), .A2(`CH15_A2)
     ) u_ch15 (
-        .clk(clk), .rst_n(rst_n), .sample_en(sample_en),
+        .clk(clk), .rst(rst), .sample_en(sample_en),
         .x(x_in), .y(y_ch15)
     );
 
@@ -231,7 +231,7 @@ module erb_filterbank_top #(
         .B0(`CH16_B0), .B1(`CH16_B1), .B2(`CH16_B2),
         .A1(`CH16_A1), .A2(`CH16_A2)
     ) u_ch16 (
-        .clk(clk), .rst_n(rst_n), .sample_en(sample_en),
+        .clk(clk), .rst(rst), .sample_en(sample_en),
         .x(x_in), .y(y_ch16)
     );
 
