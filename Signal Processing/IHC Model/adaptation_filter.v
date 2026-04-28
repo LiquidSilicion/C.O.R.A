@@ -3,9 +3,9 @@
 // Company: 
 // Engineer: 
 // 
-// Create Date: 03/27/2026 01:16:24 AM
+// Create Date: 03/27/2026 01:21:26 AM
 // Design Name: 
-// Module Name: lpf
+// Module Name: adf
 // Project Name: 
 // Target Devices: 
 // Tool Versions: 
@@ -20,107 +20,117 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 
+module adaptation_filter(    
+    input  wire               clk,
+    input  wire               rst,
+    input  wire               valid_in,
+    input  wire signed [15:0] x_in,        // Q1.15 from nonlinear compression, bipolar
+    output reg  signed [15:0] y_out,        // signed output, can go negative (undershoot)
+    output reg                valid_out
 
-//////////////////////////////////////////////////////////////////////////////////
-// Module Name: lowpass_filter
-// Description: 2nd Order Butterworth Lowpass, 300Hz cutoff, 16kHz fs
-//              FIX 1: A1 stored as positive magnitude (was -30044, caused
-//                     positive feedback loop and saturation)
-//              FIX 2: B coefficients gain-normalised so DC gain = 1.0
-//                     Original B0/B1/B2 = 52/105/52 gave DC gain = 0.006
-//                     Normalised B0/B1/B2 = 4076/8152/4076 gives DC gain = ~1.0
-//                     LP_out now tracks HWR_out in same Q2.14 scale
-//////////////////////////////////////////////////////////////////////////////////
-
-module lowpass_filter(
-    input  wire        clk,
-    input  wire        rst,
-    input  wire        valid_in,
-    input  wire [15:0] x_in,       // unsigned input from half wave rectifier
-    output reg  [15:0] y_out,       // 16-bit envelope output A(t)
-    output reg         valid_out
-);
-
+    );
+        // =============================================
+    // Coefficients in Q1.15 (scaled by 32768)
+    // All derived from τ_fast=5ms, τ_slow=50ms, fs=16000Hz
+    //
+    // ALPHA_FAST  = e^(-1/(16000*0.005)) = e^(-1/80)  = 0.9876 * 32768 = 32358
+    // ALPHA_SLOW  = e^(-1/(16000*0.050)) = e^(-1/800) = 0.9987 * 32768 = 32725
+    // ONE_M_AF    = (1 - 0.9876) * 32768  = 0.0124 * 32768 = 406
+    // ONE_M_AS    = (1 - 0.9987) * 32768  = 0.0013 * 32768 = 43
+    // GAIN_FAST   = 0.3 * 32768 = 9830   (fast pool dominance, Meddis 1986)
+    // GAIN_SLOW   = 0.1 * 32768 = 3277   (slow pool secondary, Meddis 1986)
     // =============================================
-    // 2nd Order Butterworth Lowpass Biquad
-    // Cutoff: 300Hz, Fs: 16kHz, Fixed point: Q2.14
-    //
-    // K = tan(pi*300/16000) = 0.05891
-    // norm = 1/(1 + sqrt(2)*K + K^2)
-    //
-    // RAW coefficients (before gain normalisation):
-    //   b0 = K^2 * norm         = 0.003202
-    //   b1 = 2*K^2 * norm       = 0.006404
-    //   b2 = K^2 * norm         = 0.003202
-    //   a1 = 2*(K^2-1)*norm     = -1.8337   (stored as +30044, subtracted in eq)
-    //   a2 = (1-sqrt(2)*K+K^2)*norm = 0.8465
-    //
-    // DC gain of raw filter = (b0+b1+b2)/(1+a1_coeff-a2)
-    //   with a1_coeff = -1.8337:
-    //   = (3*0.003202)/(1 + (-1.8337) - 0.8465) ... wait
-    //   DC gain = (b0+b1+b2) / (1 - (-a1_stored_sign) + a2)
-    //           = 209/16384 / (16384+30044-13870)/16384
-    //           = 209 / 32558 = 0.00641
-    //
-    // GAIN-NORMALISED B coefficients (multiply by 16384/209 = 78.4):
-    //   B0 = 52  * 78.4 = 4076  (Q2.14)
-    //   B1 = 105 * 78.4 = 8232  → use 8152 to avoid rounding overshoot
-    //   B2 = 52  * 78.4 = 4076  (Q2.14)
-    //
-    // A coefficients unchanged:
-    //   A1 = 30044  (positive magnitude, subtracted in biquad eq)
-    //   A2 = 13870  (positive, subtracted in biquad eq)
+    localparam signed [15:0] ALPHA_FAST  =  16'sd32358;
+    localparam signed [15:0] ALPHA_SLOW  =  16'sd32725;
+    localparam signed [15:0] ONE_M_AF    =  16'sd406;
+    localparam signed [15:0] ONE_M_AS    =  16'sd43;
+    localparam signed [15:0] GAIN_FAST   =  16'sd9830;
+    localparam signed [15:0] GAIN_SLOW   =  16'sd3277;
+ 
     // =============================================
-
-    localparam signed [15:0] B0 =  16'sd4076;
-    localparam signed [15:0] B1 =  16'sd8152;
-    localparam signed [15:0] B2 =  16'sd4076;
-    localparam signed [15:0] A1 =  16'sd30044;  // positive magnitude, subtracted
-    localparam signed [15:0] A2 =  16'sd13870;  // positive, subtracted
-
-    // Filter state registers
-    reg signed [15:0] x_n1, x_n2;
-    reg signed [15:0] y_n1, y_n2;
-
-    // 32-bit accumulator - biquad equation:
-    // y[n] = b0*x[n] + b1*x[n-1] + b2*x[n-2] - a1*y[n-1] - a2*y[n-2]
-    // (A1 is positive magnitude so subtract gives correct negative feedback)
-    wire signed [31:0] acc;
-    assign acc = (B0 * $signed(x_in))
-               + (B1 * x_n1)
-               + (B2 * x_n2)
-               - (A1 * y_n1)
-               - (A2 * y_n2);
-
-    // Scale back from Q2.14: divide by 2^14, take bits [29:14]
-    // Saturation: check bits [31:30] for overflow
-    //   00 or 11 = normal range
-    //   01       = positive overflow → clamp to max
-    //   10       = negative overflow → clamp to min
-    wire signed [15:0] y_next;
-    assign y_next = (acc[31] == 1'b0 && acc[30:29] != 2'b00) ? 16'sd32767  :
-                    (acc[31] == 1'b1 && acc[30:29] != 2'b11) ? -16'sd32768 :
-                    acc[29:14];
-
+    // State registers
+    // state_fast = running average over 5ms  (fast vesicle pool level)
+    // state_slow = running average over 50ms (slow vesicle pool level)
+    // Both hold their value between valid pulses
+    // Both reset to 0 (no sound heard, pools empty)
+    // =============================================
+    reg signed [15:0] state_fast;
+    reg signed [15:0] state_slow;
+ 
+    // =============================================
+    // Internal wires - 32-bit to prevent overflow
+    // 16-bit x 16-bit multiplication = 32-bit result
+    // =============================================
+ 
+    // Fast state update wires
+    // state_fast[n] = alpha_fast * state_fast[n-1] + (1-alpha_fast) * x[n]
+    wire signed [31:0] fast_decay;      // alpha_fast * old state (memory term)
+    wire signed [31:0] fast_input;      // (1-alpha_fast) * x_in  (update term)
+    wire signed [15:0] new_state_fast;  // scaled back to 16-bit
+ 
+    // Slow state update wires
+    // state_slow[n] = alpha_slow * state_slow[n-1] + (1-alpha_slow) * x[n]
+    wire signed [31:0] slow_decay;      // alpha_slow * old state
+    wire signed [31:0] slow_input;      // (1-alpha_slow) * x_in
+    wire signed [15:0] new_state_slow;  // scaled back to 16-bit
+ 
+    // Output computation wires
+    // y[n] = x[n] - gain_fast * state_fast[n] - gain_slow * state_slow[n]
+    wire signed [31:0] subtract_fast;   // gain_fast * new_state_fast
+    wire signed [31:0] subtract_slow;   // gain_slow * new_state_slow
+    wire signed [15:0] y_next;          // final output before registering
+ 
+    // =============================================
+    // Fast state computation (combinational)
+    // =============================================
+    assign fast_decay     = ALPHA_FAST * state_fast;
+    assign fast_input     = ONE_M_AF   * x_in;
+    // Add both terms, shift right by 15 to scale back from Q2.30 to Q1.15
+    // >>> is arithmetic right shift - preserves sign bit for negative values
+    // >> would shift in zeros and corrupt negative numbers
+    assign new_state_fast = (fast_decay + fast_input) >>> 15;
+ 
+    // =============================================
+    // Slow state computation (combinational)
+    // =============================================
+    assign slow_decay     = ALPHA_SLOW * state_slow;
+    assign slow_input     = ONE_M_AS   * x_in;
+    assign new_state_slow = (slow_decay + slow_input) >>> 15;
+ 
+    // =============================================
+    // Output computation (combinational)
+    // y = x - 0.3*state_fast - 0.1*state_slow
+    // Subtract running averages from input
+    // What remains = new events = onsets = surprise
+    // =============================================
+    assign subtract_fast = GAIN_FAST * new_state_fast;
+    assign subtract_slow = GAIN_SLOW * new_state_slow;
+    assign y_next = x_in
+                  - $signed(subtract_fast >>> 15)
+                  - $signed(subtract_slow >>> 15);
+ 
+    // =============================================
+    // Sequential block
+    // Update states and output on every valid pulse
+    // States hold between valid pulses (pool levels persist)
+    // NO saturation clamp - output can go negative (undershoot)
+    // Negative values carry recovery information for downstream stages
+    // =============================================
     always @(posedge clk or posedge rst) begin
         if (rst) begin
-            x_n1      <= 16'sd0;
-            x_n2      <= 16'sd0;
-            y_n1      <= 16'sd0;
-            y_n2      <= 16'sd0;
-            y_out     <= 16'd0;
-            valid_out <= 1'b0;
+            state_fast <= 16'sd0;
+            state_slow <= 16'sd0;
+            y_out      <= 16'sd0;
+            valid_out  <= 1'b0;
         end
         else if (valid_in) begin
-            x_n2      <= x_n1;
-            x_n1      <= $signed(x_in);
-            y_n2      <= y_n1;
-            y_n1      <= y_next;
-            y_out     <= y_next;
-            valid_out <= 1'b1;
+            state_fast <= new_state_fast;
+            state_slow <= new_state_slow;
+            y_out      <= y_next;
+            valid_out  <= 1'b1;
         end
         else begin
-            valid_out <= 1'b0;
+            valid_out  <= 1'b0;
         end
     end
 endmodule
