@@ -3,7 +3,7 @@ module output_layer #(
     parameter NH = 128    // number of hidden neurons (must match mac_engine)
 )(
     input  wire               clk,
-    input  wire               rst_n,
+    input  wire               rst,
  
     // ── from mac_engine (Stage 11/12) ────────────────────────────────────────
     input  wire [NO*32-1:0]   score_out,    // Q16.16 per-class scores
@@ -57,7 +57,7 @@ module output_layer #(
     integer i;
  
     always @(posedge clk) begin
-        if (!rst_n) begin
+        if (rst) begin
             for (i = 0; i < NO; i = i+1) begin
                 bank_a[i] <= 32'sd0;
                 bank_b[i] <= 32'sd0;
