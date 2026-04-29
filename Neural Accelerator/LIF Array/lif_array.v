@@ -4,7 +4,7 @@ module lif_array #(
     parameter THETA = 16'h0100         // θ = 1.0   in Q8.8
 )(
     input  wire          clk,
-    input  wire          rst_n,
+    input  wire          rst,
     input  wire          clear_state,
     input  wire [15:0]   lif_acc,      // Q8.8 synaptic current for neuron lif_idx
     input  wire [6:0]    lif_idx,      // neuron index (0 .. NH-1)
@@ -42,7 +42,7 @@ module lif_array #(
  
     // ─── main clocked process ────────────────────────────────────────────────
     always @(posedge clk) begin
-        if (!rst_n) begin
+        if (rst) begin
             cap_state    <= ST_IDLE;
             cap_idx      <= 0;
             lif_spikes   <= 0;
