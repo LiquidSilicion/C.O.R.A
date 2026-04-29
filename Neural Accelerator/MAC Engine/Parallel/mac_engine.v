@@ -30,7 +30,7 @@ module mac_engine #(
     parameter W_OUT_BASE = 16'h9000
 )(
     input  wire                   clk,
-    input  wire                   rst_n,
+    input  wire                   rst,
     input  wire                   mac_start,
     output reg                    mac_done,
  
@@ -108,7 +108,7 @@ module mac_engine #(
     integer ri, k;
  
     always @(posedge clk) begin
-        if (!rst_n) begin
+        if (rst) begin
             // Full reset
             state <= S_IDLE; t_cnt <= 0; group_cnt <= 0; col_cnt <= 0; lif_cnt <= 0;
             mac_done <= 0; score_valid <= 0;
