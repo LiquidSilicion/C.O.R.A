@@ -31,7 +31,7 @@ module overlap_voter #(
 )(
     // ── Clocking ────────────────────────────────────────────────────────────
     input  wire                              clk,      // 200 MHz on ZCU104
-    input  wire                              rst_n,    // active-low SYNC reset
+    input  wire                              rst,    // active-low SYNC reset
 
     // ── From Stage 13 (Output Layer accumulator) ─────────────────────────
     // Flat packed bus: score_in[k*16 +: 16] = class k score
@@ -152,7 +152,7 @@ wire [SUM_WIDTH-1:0]  argmax_score = tree[1][NODE_W-1:CLASS_BITS];
 // ─────────────────────────────────────────────────────────────────────────────
 integer k;
 always @(posedge clk) begin
-    if (!rst_n) begin
+    if (rst) begin
         state      <= ST_IDLE;
         voter_busy <= 1'b0;
         pred_valid <= 1'b0;
