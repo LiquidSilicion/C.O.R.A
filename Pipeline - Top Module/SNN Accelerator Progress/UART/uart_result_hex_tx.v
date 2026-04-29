@@ -4,7 +4,7 @@ module uart_result_hex_tx #(
     parameter BAUD_RATE = 115200
 )(
     input  wire                clk,
-    input  wire                rst_n,
+    input  wire                rst,
     input  wire                tx_trigger,
     input  wire [3:0]          cmd_id,
     input  wire signed [16:0]  score_in,
@@ -24,7 +24,7 @@ module uart_result_hex_tx #(
     reg       baud_tick;
 
     always @(posedge clk) begin
-        if (!rst_n) begin
+        if (rst) begin
             baud_cnt  <= 0;
             baud_tick <= 0;
         end else begin
@@ -52,7 +52,7 @@ module uart_result_hex_tx #(
     assign tx_busy = (phy_state != 0);
 
     always @(posedge clk) begin
-        if (!rst_n) begin
+        if (rst) begin
             phy_state <= 0;
             tx_reg    <= 1'b1;
             bit_cnt   <= 0;
@@ -107,7 +107,7 @@ module uart_result_hex_tx #(
     endfunction
 
     always @(posedge clk) begin
-        if (!rst_n) begin
+        if (rst) begin
             seq_state <= 0;
             phy_load  <= 0;
             cmd_reg   <= 0;
