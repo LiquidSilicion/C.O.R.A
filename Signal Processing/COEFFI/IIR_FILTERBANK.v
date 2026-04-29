@@ -1,7 +1,7 @@
 
 `include "erb_coeff_pkg.vh"
 
-module erb_filterbank_top #(
+module fft_filterbank #(
     parameter SB = 16,   // signal bits
     parameter CB = 16    // coefficient bits
 )(
