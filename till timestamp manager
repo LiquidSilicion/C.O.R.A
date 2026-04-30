@@ -1,0 +1,472 @@
+`timescale 1ns / 1ps
+//////////////////////////////////////////////////////////////////////////////////
+// Company: 
+// Engineer: 
+// 
+// Create Date: 30.04.2026 12:44:43
+// Design Name: 
+// Module Name: aer_pipeline
+// Project Name: 
+// Target Devices: 
+// Tool Versions: 
+// Description: 
+// 
+// Dependencies: 
+// 
+// Revision:
+// Revision 0.01 - File Created
+// Additional Comments:
+// 
+//////////////////////////////////////////////////////////////////////////////////
+module aer_pipeline (
+    input               clk,
+    input               rst,
+    input               rom_en,
+    input               window_open,
+    output [3:0]        channel_Id,
+    output [31:0]       timestamp,
+    output              timestamp_valid,
+    output              spike_detected,
+    output              window_start,
+    output              fifo_full,
+    output              fifo_empty,
+    output              rom_done
+);
+
+    wire [23:0] rom_data, fifo_dout;
+    wire        rom_valid, fifo_rd_en, raw_ts_valid;
+    reg         fifo_rd_valid;
+    wire [19:0] raw_ts;
+
+    // 1-cycle read delay to match FIFO output latency
+    assign fifo_rd_en = !fifo_empty;
+
+    always @(posedge clk or posedge rst) begin
+        if (rst)
+            fifo_rd_valid <= 1'b0;
+        else
+            fifo_rd_valid <= fifo_rd_en;
+    end
+
+    // ROM Stimulus - FIXED ADDR_WIDTH
+    aer_rom #(
+        .MEM_FILE("aer_input.mem"),
+        .MEM_DEPTH(4145),
+        .ADDR_WIDTH(13)  // ✅ ceil(log2(4145)) = 13
+    ) u_rom (
+        .clk(clk),
+        .rst(rst),
+        .en(rom_en && !fifo_full),
+        .aer_data(rom_data),
+        .aer_valid(rom_valid),
+        .rom_empty(rom_done)
+    );
+
+    // FIFO
+    fifo #(
+        .DATA_WIDTH(24),
+        .DEPTH(64),
+        .ADDR_WIDTH(6)
+    ) u_fifo (
+        .clk(clk),
+        .rst(rst),
+        .wr_en(rom_valid),
+        .rd_en(fifo_rd_en),
+        .din(rom_data),
+        .dout(fifo_dout),
+        .full(fifo_full),
+        .empty(fifo_empty)
+    );
+
+    // AER Decoder
+    input_from_aer u_decoder (
+        .clk(clk),
+        .rst(rst),
+        .in(fifo_dout),
+        .aer_valid(fifo_rd_valid),
+        .channel_Id(channel_Id),
+        .timestamp(raw_ts),
+        .timestamp_valid(raw_ts_valid),
+        .spike_detected(spike_detected)
+    );
+
+    // Timestamp Manager
+    timestamp_manager u_ts_mgr (
+        .clk(clk),
+        .rst(rst),
+        .timestamp(raw_ts),
+        .ts_valid(raw_ts_valid),
+        .window_open(window_open),
+        .ts_abs(timestamp),
+        .ts_abs_valid(timestamp_valid),
+        .window_start(window_start),
+        .window_offset()  // Unused output - OK to leave unconnected in Verilog-2001
+    );
+
+endmodule
+
+
+`timescale 1ns / 1ps
+//////////////////////////////////////////////////////////////////////////////////
+// Company: 
+// Engineer: 
+// 
+// Create Date: 30.04.2026 12:48:09
+// Design Name: 
+// Module Name: aer_rom
+// Project Name: 
+// Target Devices: 
+// Tool Versions: 
+// Description: 
+// 
+// Dependencies: 
+// 
+// Revision:
+// Revision 0.01 - File Created
+// Additional Comments:
+// 
+//////////////////////////////////////////////////////////////////////////////////
+module aer_rom #(
+    parameter MEM_FILE = "aer_input.mem",  // Hex file: one 24-bit word per line
+    parameter MEM_DEPTH = 4145,             // Must match .mem file size
+    parameter ADDR_WIDTH = 13               // ceil(log2(MEM_DEPTH))
+)(
+    input  wire             clk,
+    input  wire             rst,           // ✅ Positive reset
+    input  wire             en,            // Read enable (e.g., from testbench FSM)
+    output reg  [23:0]      aer_data,
+    output reg              aer_valid,
+    output wire             rom_empty      // High when addr >= MEM_DEPTH
+);
+
+    reg [23:0] mem [0:MEM_DEPTH-1];
+    reg [ADDR_WIDTH-1:0] addr;
+    
+    // ✅ Synthesis-safe initialization (for simulation; synthesize with .coe/.mif)
+    initial begin
+        $readmemh(MEM_FILE, mem);
+        addr = 0;
+        aer_data = 24'd0;
+        aer_valid = 1'b0;
+    end
+
+    // ✅ Positive-edge reset, sequential read
+    always @(posedge clk or posedge rst) begin
+        if (rst) begin
+            addr      <= 0;
+            aer_data  <= 24'd0;
+            aer_valid <= 1'b0;
+        end else if (en && !rom_empty) begin
+            aer_data  <= mem[addr];
+            aer_valid <= 1'b1;
+            addr      <= addr + 1'b1;
+        end else begin
+            aer_valid <= 1'b0;
+        end
+    end
+
+    assign rom_empty = (addr >= MEM_DEPTH);
+
+endmodule
+
+
+module timestamp_manager(
+    input  wire        clk,
+    input  wire        rst,
+    input  wire [19:0] timestamp,
+    input  wire        ts_valid,
+    input  wire        window_open,
+    output reg  [31:0] ts_abs,
+    output reg         ts_abs_valid,
+    output reg  [31:0] window_start,
+    output reg  [19:0] window_offset
+);
+ 
+    reg [19:0] ts_prev;
+    reg [11:0] rollover_count;
+ 
+    wire [31:0] ts_abs_comb;
+    assign ts_abs_comb = {rollover_count, timestamp};
+ 
+    wire [31:0] offset_full;
+    assign offset_full = ts_abs_comb - window_start;
+ 
+    wire rollover_detected;
+    assign rollover_detected = ts_valid && (ts_prev > timestamp) && ((ts_prev - timestamp) > 20'h80000);
+
+    always @(posedge clk or posedge rst) begin
+        if (rst) begin
+            rollover_count <= 12'd0;
+            ts_prev        <= 20'd0;
+        end else if (ts_valid) begin
+            if (rollover_detected)
+                rollover_count <= rollover_count + 12'd1;
+            ts_prev <= timestamp; 
+        end
+    end
+ 
+    // FIXED: added posedge rst to sensitivity list
+    always @(posedge clk or posedge rst) begin
+        if (rst) begin
+            ts_abs       <= 32'd0;
+            ts_abs_valid <= 1'b0;
+        end else begin
+            ts_abs_valid <= ts_valid;
+            if (ts_valid) begin
+                if (rollover_detected)
+                    ts_abs <= {rollover_count + 12'd1, timestamp};
+                else
+                    ts_abs <= {rollover_count, timestamp};
+            end
+        end
+    end
+
+    always @(posedge clk or posedge rst) begin
+        if (rst) begin
+            window_start  <= 32'd0;
+            window_offset <= 20'd0;
+        end else begin
+            if (window_open)
+                window_start <= ts_abs_comb;
+            if (ts_valid) begin
+                if (offset_full[31:20] != 12'd0)
+                    window_offset <= 20'hFFFFF;
+                else
+                    window_offset <= offset_full[19:0];
+            end
+        end
+    end
+endmodule
+
+
+module input_from_aer (
+    input               clk,
+    input               rst,
+    input  [23:0]       in,
+    input               aer_valid,
+    output reg          spike_detected,
+    output reg [3:0]    channel_Id,
+    output reg [19:0]   timestamp,
+    output reg          timestamp_valid
+);
+
+    reg [23:0] pipe_stage0, pipe_stage1, pipe_stage2;
+    reg        valid_stage0, valid_stage1, valid_stage2;
+
+    always @(posedge clk or posedge rst) begin
+        if (rst) begin
+            pipe_stage0    <= 24'd0;
+            pipe_stage1    <= 24'd0;
+            pipe_stage2    <= 24'd0;
+            valid_stage0   <= 1'b0;
+            valid_stage1   <= 1'b0;
+            valid_stage2   <= 1'b0;
+            channel_Id     <= 4'd0;
+            timestamp      <= 20'd0;
+            spike_detected <= 1'b0;
+            timestamp_valid<= 1'b0;
+        end else begin
+            if (aer_valid) begin
+                pipe_stage0  <= in;
+                valid_stage0 <= 1'b1;
+            end else begin
+                valid_stage0 <= 1'b0;
+            end
+
+            pipe_stage1  <= pipe_stage0;
+            valid_stage1 <= valid_stage0;
+            pipe_stage2  <= pipe_stage1;
+            valid_stage2 <= valid_stage1;
+
+            if (valid_stage2) begin
+                channel_Id      <= pipe_stage2[23:20];
+                timestamp       <= pipe_stage2[19:0];
+                timestamp_valid <= 1'b1;
+                spike_detected  <= 1'b1;
+            end else begin
+                timestamp_valid <= 1'b0;
+                spike_detected  <= 1'b0;
+            end
+        end
+    end
+
+endmodule
+
+module fifo #(
+    parameter DATA_WIDTH = 24,
+    parameter DEPTH      = 64,
+    parameter ADDR_WIDTH = 6
+)(
+    input                   clk,
+    input                   rst,
+    input                   wr_en,
+    input                   rd_en,
+    input  [DATA_WIDTH-1:0] din,
+    output reg [DATA_WIDTH-1:0] dout,
+    output                  full,
+    output                  empty
+);
+
+    reg [DATA_WIDTH-1:0] mem [0:DEPTH-1];
+    reg [ADDR_WIDTH:0]   wr_ptr, rd_ptr;
+
+    wire [ADDR_WIDTH-1:0] wr_addr = wr_ptr[ADDR_WIDTH-1:0];
+    wire [ADDR_WIDTH-1:0] rd_addr = rd_ptr[ADDR_WIDTH-1:0];
+
+    integer init_i;
+    initial begin
+        for (init_i = 0; init_i < DEPTH; init_i = init_i + 1)
+            mem[init_i] = 24'd0;
+    end
+
+    always @(posedge clk or posedge rst) begin
+        if (rst) wr_ptr <= 0;
+        else if (wr_en && !full) begin
+            mem[wr_addr] <= din;
+            wr_ptr <= wr_ptr + 1'b1;
+        end
+    end
+
+    always @(posedge clk or posedge rst) begin
+        if (rst) begin
+            rd_ptr <= 0;
+            dout   <= 0;
+        end else if (rd_en && !empty) begin
+            dout   <= mem[rd_addr];
+            rd_ptr <= rd_ptr + 1'b1;
+        end
+    end
+
+    assign empty = (wr_ptr == rd_ptr);
+    assign full  = (wr_ptr == rd_ptr + DEPTH);
+
+endmodule
+
+
+`timescale 1ns / 1ps
+//////////////////////////////////////////////////////////////////////////////////
+// Company: 
+// Engineer: 
+// 
+// Create Date: 30.04.2026 12:45:46
+// Design Name: 
+// Module Name: tb_aer_pipeline
+// Project Name: 
+// Target Devices: 
+// Tool Versions: 
+// Description: 
+// 
+// Dependencies: 
+// 
+// Revision:
+// Revision 0.01 - File Created
+// Additional Comments:
+// 
+//////////////////////////////////////////////////////////////////////////////////
+module tb_aer_pipeline;
+
+    // Parameters
+    parameter CLK_PERIOD = 8; // 125 MHz = 8 ns
+
+    // Testbench signals (reg for driving, wire for monitoring)
+    reg         clk;
+    reg         rst;
+    reg         rom_en;
+    reg         window_open;
+    wire [3:0]  channel_Id;
+    wire [31:0] timestamp;
+    wire        timestamp_valid;
+    wire        spike_detected;
+    wire        window_start;
+    wire        fifo_full;
+    wire        fifo_empty;
+    wire        rom_done;
+
+    // Monitor counter (module-level declaration)
+    integer     spike_count;
+    reg         monitor_en;
+
+    // Instantiate DUT with EXPLICIT port connections (Verilog-2001)
+    aer_pipeline dut (
+        .clk(clk),
+        .rst(rst),
+        .rom_en(rom_en),
+        .window_open(window_open),
+        .channel_Id(channel_Id),
+        .timestamp(timestamp),
+        .timestamp_valid(timestamp_valid),
+        .spike_detected(spike_detected),
+        .window_start(window_start),
+        .fifo_full(fifo_full),
+        .fifo_empty(fifo_empty),
+        .rom_done(rom_done)
+    );
+
+    // Clock generation
+    initial begin
+        clk = 1'b0;
+        forever # (CLK_PERIOD/2) clk = ~clk;
+    end
+
+    // Monitor logic (separate always block - NOT nested)
+    always @(posedge clk) begin
+        if (monitor_en && timestamp_valid && (spike_count < 10)) begin
+            $display("t=%0t | ch=%h ts=%h valid=%b spike=%b win_start=%b",
+                     $time, channel_Id, timestamp, timestamp_valid, 
+                     spike_detected, window_start);
+            spike_count <= spike_count + 1;
+        end
+    end
+
+    // Main stimulus
+    initial begin
+        // VCD dump
+        $dumpfile("tb_aer_pipeline.vcd");
+        $dumpvars(0, tb_aer_pipeline);
+
+        // Initialize
+        rst         = 1'b1;
+        rom_en      = 1'b0;
+        window_open = 1'b0;
+        monitor_en  = 1'b0;
+        spike_count = 0;
+
+        // Release reset
+        #20;
+        rst = 1'b0;
+
+        // Assert window_open for 1 cycle to latch window_start
+        # (CLK_PERIOD);
+        window_open = 1'b1;
+        # (CLK_PERIOD);
+        window_open = 1'b0;
+
+        // Enable monitor and start ROM streaming
+        monitor_en = 1'b1;
+        rom_en = 1'b1;
+
+        // Wait for ROM to finish + safety margin
+        wait (rom_done);
+        # (CLK_PERIOD * 20);
+
+        // Final report
+        $display("");
+        $display("================================");
+        $display("✅ Test complete.");
+        $display("   Total spikes processed: %0d", spike_count);
+        $display("   ROM empty: %b", rom_done);
+        $display("================================");
+        $finish;
+    end
+
+    // Optional: timeout guard to prevent infinite hang
+    initial begin
+        # (CLK_PERIOD * 10000); // 80 µs timeout
+        $display("❌ TIMEOUT: Test exceeded maximum runtime");
+        $finish;
+    end
+
+endmodule
+
+
+
