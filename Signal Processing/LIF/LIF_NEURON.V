@@ -4,7 +4,7 @@ module lif_neuron #(
     parameter REFRAC      = 4'd8
 )(
     input  wire        clk,
-    input  wire        rst_n,
+    input  wire        rst,
     input  wire        sample_en,    // 16kHz pulse
     input  wire [15:0] ihc_in,       // 16-bit unsigned IHC envelope
     output reg         spike         // 1 = fired, 0 = silent
@@ -22,7 +22,7 @@ module lif_neuron #(
     reg [31:0] membrane_reg;
 
 always @(posedge clk) begin
-    if (!rst_n)
+    if (rst)
         membrane_reg <= 0;
     else if (sample_en)
         membrane_reg <= membrane;
@@ -54,7 +54,7 @@ wire [47:0] leak_full = membrane_reg * LEAK_FACTOR;
     //  STEP 3 - Fire / Integrate / Refractory
     // ----------------------------------------------------------
     always @(posedge clk) begin
-        if (!rst_n) begin
+        if (rst) begin
             membrane   <= 32'd0;
             refrac_cnt <= 4'd0;
             spike      <= 1'b0;
